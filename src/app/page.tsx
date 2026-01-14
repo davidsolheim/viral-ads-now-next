@@ -1,65 +1,78 @@
-import Image from "next/image";
+import { auth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
-export default function Home() {
+export default async function HomePage() {
+  const session = await auth();
+
+  if (session) {
+    redirect('/dashboard');
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="text-center">
+        <h1 className="text-5xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+          Viral Ads Now
+        </h1>
+        <p className="mt-6 text-lg leading-8 text-gray-600 max-w-2xl">
+          Create professional video advertisements instantly. Just drop a product link, select your style, and let AI handle the rest.
+        </p>
+        <div className="mt-10 flex items-center justify-center gap-x-6">
+          <Link
+            href="/auth/signin"
+            className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
+            Get Started
+          </Link>
           <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="#features"
+            className="text-sm font-semibold leading-6 text-gray-900"
           >
-            Documentation
+            Learn more <span aria-hidden="true">→</span>
           </a>
         </div>
-      </main>
+      </div>
+
+      <div id="features" className="mt-24 max-w-4xl">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+          <div className="rounded-lg bg-white p-6 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
+              <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 className="mt-4 text-lg font-semibold text-gray-900">Instant Generation</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              From product link to finished video in minutes, not hours
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-white p-6 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
+              <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="mt-4 text-lg font-semibold text-gray-900">Professional Quality</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              AI-powered scripts, voiceovers, and visuals that convert
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-white p-6 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
+              <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 className="mt-4 text-lg font-semibold text-gray-900">Team Collaboration</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Work together with your team across multiple organizations
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
