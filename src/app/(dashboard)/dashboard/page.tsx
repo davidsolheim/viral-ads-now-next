@@ -1,5 +1,7 @@
 import { auth, signOut } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { DashboardClient } from '@/components/dashboard/dashboard-client';
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -15,13 +17,13 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
+      <nav className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between">
             <div className="flex">
-              <div className="flex flex-shrink-0 items-center">
+              <Link href="/dashboard" className="flex flex-shrink-0 items-center">
                 <h1 className="text-xl font-bold text-gray-900">Viral Ads Now</h1>
-              </div>
+              </Link>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-700">
@@ -40,46 +42,7 @@ export default async function DashboardPage() {
         </div>
       </nav>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">Welcome back!</h2>
-          <p className="mt-1 text-sm text-gray-600">
-            Create instant viral video ads from product links
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <h3 className="text-lg font-semibold text-gray-900">Create New Ad</h3>
-            <p className="mt-2 text-sm text-gray-600">
-              Start a new video ad project from a product link
-            </p>
-            <button className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-              Get Started
-            </button>
-          </div>
-
-          <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Projects</h3>
-            <p className="mt-2 text-sm text-gray-600">
-              View and manage your video ad projects
-            </p>
-            <button className="mt-4 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-              View Projects
-            </button>
-          </div>
-
-          <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <h3 className="text-lg font-semibold text-gray-900">Organizations</h3>
-            <p className="mt-2 text-sm text-gray-600">
-              Manage your teams and collaborators
-            </p>
-            <button className="mt-4 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-              Manage Teams
-            </button>
-          </div>
-        </div>
-      </main>
+      <DashboardClient userId={session.user.id} />
     </div>
   );
 }
