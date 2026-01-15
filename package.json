@@ -10,7 +10,8 @@
     "db:generate": "dotenv -e .env.local -- drizzle-kit generate",
     "db:migrate": "dotenv -e .env.local -- drizzle-kit migrate",
     "db:push": "dotenv -e .env.local -- drizzle-kit push",
-    "db:studio": "dotenv -e .env.local -- drizzle-kit studio"
+    "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
+    "seed:blog": "dotenv -e .env.local -- bun ./scripts/seed-blog.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
@@ -21,11 +22,14 @@
     "@paralleldrive/cuid2": "^3.0.6",
     "@tanstack/react-query": "^5.90.17",
     "@tanstack/react-query-devtools": "^5.91.2",
+    "@vercel/blob": "^2.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
+    "gray-matter": "^4.0.3",
     "lucide-react": "^0.562.0",
+    "marked": "^17.0.1",
     "next": "^16.1.2",
     "next-auth": "^5.0.0-beta.30",
     "react": "19.2.3",

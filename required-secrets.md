@@ -25,3 +25,6 @@ WASABI_SECRET_ACCESS_KEY='your_wasabi_secret_key'
 WASABI_BUCKET_NAME='your_bucket_name'
 WASABI_REGION='your_region'
 WASABI_ENDPOINT='your_endpoint'
+
+# Vercel Blob (blog images)
+BLOB_READ_WRITE_TOKEN='your_vercel_blob_token'
