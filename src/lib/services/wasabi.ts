@@ -28,10 +28,15 @@ function getS3Client(): S3Client {
   return s3Client;
 }
 
+export type AssetType = 'images' | 'audio' | 'video' | 'master';
+
 export interface UploadOptions {
   file: Buffer | Uint8Array;
   fileName: string;
   contentType: string;
+  organizationId?: string;
+  projectId?: string;
+  assetType?: AssetType;
   folder?: string;
   metadata?: Record<string, string>;
 }
@@ -43,11 +48,30 @@ export interface UploadResult {
   contentType: string;
 }
 
+const USER_MEDIA_ROOT = 'user-media';
+
+function buildStoragePath(
+  organizationId: string,
+  projectId: string,
+  assetType: AssetType
+): string {
+  return `${USER_MEDIA_ROOT}/${organizationId}/${projectId}/${assetType}`;
+}
+
 /**
  * Upload a file to Wasabi storage
  */
 export async function uploadFile(options: UploadOptions): Promise<UploadResult> {
-  const { file, fileName, contentType, folder = 'uploads', metadata = {} } = options;
+  const {
+    file,
+    fileName,
+    contentType,
+    organizationId,
+    projectId,
+    assetType,
+    folder,
+    metadata = {},
+  } = options;
 
   const bucketName = process.env.WASABI_BUCKET_NAME;
   if (!bucketName) {
@@ -56,10 +80,16 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
 
   const client = getS3Client();
 
+  const resolvedFolder =
+    folder ||
+    (organizationId && projectId && assetType
+      ? buildStoragePath(organizationId, projectId, assetType)
+      : 'uploads');
+
   // Generate a unique key
   const timestamp = Date.now();
   const hash = crypto.createHash('md5').update(file).digest('hex').substring(0, 8);
-  const key = `${folder}/${timestamp}-${hash}-${fileName}`;
+  const key = `${resolvedFolder}/${timestamp}-${hash}-${fileName}`;
 
   try {
     const command = new PutObjectCommand({
@@ -89,7 +119,10 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
 /**
  * Upload a file from a URL to Wasabi storage
  */
-export async function uploadFromUrl(url: string, options: Partial<UploadOptions> = {}): Promise<UploadResult> {
+export async function uploadFromUrl(
+  url: string,
+  options: Partial<UploadOptions> = {}
+): Promise<UploadResult> {
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -108,6 +141,9 @@ export async function uploadFromUrl(url: string, options: Partial<UploadOptions>
       file: buffer,
       fileName,
       contentType: options.contentType || contentType,
+      organizationId: options.organizationId,
+      projectId: options.projectId,
+      assetType: options.assetType,
       folder: options.folder,
       metadata: options.metadata,
     });
@@ -120,7 +156,11 @@ export async function uploadFromUrl(url: string, options: Partial<UploadOptions>
 /**
  * Check if a file exists in Wasabi storage (for deduplication)
  */
-export async function checkFileExists(fileName: string, fileSize: number, folder: string = 'uploads'): Promise<string | null> {
+export async function checkFileExists(
+  fileName: string,
+  fileSize: number,
+  folder: string = 'uploads'
+): Promise<string | null> {
   const bucketName = process.env.WASABI_BUCKET_NAME;
   if (!bucketName) {
     throw new Error('WASABI_BUCKET_NAME is not configured');
@@ -162,10 +202,15 @@ export async function checkFileExists(fileName: string, fileSize: number, folder
  * Upload with deduplication
  */
 export async function uploadWithDeduplication(options: UploadOptions): Promise<UploadResult> {
-  const { file, fileName, folder = 'uploads' } = options;
+  const { file, fileName, organizationId, projectId, assetType, folder } = options;
+  const resolvedFolder =
+    folder ||
+    (organizationId && projectId && assetType
+      ? buildStoragePath(organizationId, projectId, assetType)
+      : 'uploads');
 
   // Check if file already exists
-  const existingUrl = await checkFileExists(fileName, file.length, folder);
+  const existingUrl = await checkFileExists(fileName, file.length, resolvedFolder);
 
   if (existingUrl) {
     console.log(`File already exists: ${existingUrl}`);

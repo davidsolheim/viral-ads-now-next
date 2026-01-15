@@ -67,7 +67,9 @@ export async function POST(
 
     // Upload to Wasabi
     const uploadResult = await uploadFromUrl(voiceoverUrl, {
-      folder: `projects/${projectId}/audio`,
+      organizationId: project.organizationId,
+      projectId,
+      assetType: 'audio',
       metadata: {
         type: 'voiceover',
         scriptId: selectedScript.id,

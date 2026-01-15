@@ -128,7 +128,9 @@ export async function POST(
 
     // Upload final video to Wasabi
     const uploadResult = await uploadFromUrl(videoUrl, {
-      folder: `projects/${projectId}/videos`,
+      organizationId: project.organizationId,
+      projectId,
+      assetType: 'master',
       metadata: {
         type: 'final_video',
         resolution: options.resolution ?? '1080p',

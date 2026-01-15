@@ -59,7 +59,9 @@ export async function POST(
 
         // Upload to Wasabi
         const uploadResult = await uploadFromUrl(imageUrl, {
-          folder: `projects/${projectId}/images`,
+          organizationId: project.organizationId,
+          projectId,
+          assetType: 'images',
           metadata: {
             sceneId: scene.id,
             sceneNumber: scene.sceneNumber.toString(),
