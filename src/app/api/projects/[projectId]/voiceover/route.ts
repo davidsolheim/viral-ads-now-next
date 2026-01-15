@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { 
-  getProject, 
-  getScriptsByProject, 
+import {
   createMediaAsset,
-  updateProjectStep 
+  getProject,
+  getScriptById,
+  getSelectedScriptByProject,
+  updateProjectStep,
 } from '@/lib/db-queries';
 import { generateVoiceover } from '@/lib/services/replicate';
 import { uploadFromUrl } from '@/lib/services/wasabi';
@@ -43,10 +44,9 @@ export async function POST(
     const options = generateVoiceoverSchema.parse(body);
 
     // Get the selected script
-    const scripts = await getScriptsByProject(projectId);
     const selectedScript = options.scriptId
-      ? scripts.find((s: any) => s.id === options.scriptId)
-      : scripts.find((s: any) => s.isSelected);
+      ? await getScriptById(projectId, options.scriptId)
+      : await getSelectedScriptByProject(projectId);
 
     if (!selectedScript) {
       return NextResponse.json(

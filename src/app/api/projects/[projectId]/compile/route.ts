@@ -47,8 +47,11 @@ export async function POST(
     const body = await request.json();
     const options = compileVideoSchema.parse(body);
 
-    // Get scenes
-    const scenes = await getScenesByProject(projectId);
+    // Get scenes and assets in parallel
+    const [scenes, allAssets] = await Promise.all([
+      getScenesByProject(projectId),
+      getMediaAssetsByProject(projectId),
+    ]);
     if (scenes.length === 0) {
       return NextResponse.json(
         { error: 'No scenes found. Please generate scenes first.' },
@@ -56,8 +59,6 @@ export async function POST(
       );
     }
 
-    // Get all media assets
-    const allAssets = await getMediaAssetsByProject(projectId);
     const images = allAssets.filter((a: any) => a.type === 'image');
     const voiceovers = allAssets.filter((a: any) => a.type === 'voiceover');
     const music = allAssets.filter((a: any) => a.type === 'music');
@@ -69,12 +70,22 @@ export async function POST(
       );
     }
 
+    const imagesBySceneId = new Map<string, any>();
+    const imagesBySceneNumber = new Map<number, any>();
+    for (const image of images) {
+      if (image.sceneId) {
+        imagesBySceneId.set(image.sceneId, image);
+      }
+      const sceneNumber = (image.metadata as any)?.sceneNumber;
+      if (typeof sceneNumber === 'number') {
+        imagesBySceneNumber.set(sceneNumber, image);
+      }
+    }
+
     // Build video clips from images and scenes
     const clips = scenes.map((scene: any) => {
-      const sceneImage = images.find((img: any) =>
-        img.sceneId === scene.id ||
-        (img.metadata as any)?.sceneNumber === scene.sceneNumber
-      );
+      const sceneImage =
+        imagesBySceneId.get(scene.id) || imagesBySceneNumber.get(scene.sceneNumber);
 
       if (!sceneImage) {
         throw new Error(`No image found for scene ${scene.sceneNumber}`);

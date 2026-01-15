@@ -52,8 +52,8 @@ export function useCreateProject() {
 
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['projects', variables.organizationId] });
       toast.success('Project created successfully!');
     },
     onError: (error: Error) => {

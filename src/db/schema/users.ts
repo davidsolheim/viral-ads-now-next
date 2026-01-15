@@ -13,6 +13,7 @@ export const users = pgTable('users', {
   activeOrganizationId: varchar('activeOrganizationId', { length: 255 }),
   createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updatedAt', { mode: 'date' }).$onUpdate(() => new Date()),
+  deletedAt: timestamp('deletedAt', { mode: 'date' }),
 });
 
 // Accounts table (for OAuth providers)

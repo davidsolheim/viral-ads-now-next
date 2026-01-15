@@ -159,6 +159,28 @@ export async function getScriptsByProject(projectId: string) {
     .orderBy(desc(scripts.createdAt));
 }
 
+export async function getSelectedScriptByProject(projectId: string) {
+  const db = await getDb();
+  const [script] = await db
+    .select()
+    .from(scripts)
+    .where(and(eq(scripts.projectId, projectId), eq(scripts.isSelected, true)))
+    .limit(1);
+
+  return script;
+}
+
+export async function getScriptById(projectId: string, scriptId: string) {
+  const db = await getDb();
+  const [script] = await db
+    .select()
+    .from(scripts)
+    .where(and(eq(scripts.projectId, projectId), eq(scripts.id, scriptId)))
+    .limit(1);
+
+  return script;
+}
+
 export async function selectScript(scriptId: string, projectId: string) {
   const db = await getDb();
   // Deselect all scripts for this project

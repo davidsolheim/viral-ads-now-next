@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useGenerateImages } from '@/hooks/use-projects';
 import { Button } from '@/components/ui/button';
 import { Loading } from '@/components/ui/loading';
@@ -91,11 +92,13 @@ export function ImagesStep({ projectId, onNext }: ImagesStepProps) {
                       Scene {image.sceneNumber}
                     </span>
                   </div>
-                  <div className="aspect-square overflow-hidden rounded-lg bg-gray-100">
-                    <img
+                  <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
+                    <Image
                       src={image.asset.url}
                       alt={`Scene ${image.sceneNumber}`}
-                      className="h-full w-full object-cover"
+                      fill
+                      sizes="(min-width: 640px) 50vw, 100vw"
+                      className="object-cover"
                     />
                   </div>
                 </div>

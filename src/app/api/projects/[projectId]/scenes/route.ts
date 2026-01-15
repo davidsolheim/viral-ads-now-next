@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { 
-  getProject, 
-  getScriptsByProject, 
-  createScene, 
+import {
+  createScene,
   deleteScenesByProject,
-  updateProjectStep 
+  getProject,
+  getScriptById,
+  getSelectedScriptByProject,
+  updateProjectStep,
 } from '@/lib/db-queries';
 import { breakdownIntoScenes } from '@/lib/services/openai';
 import { z } from 'zod';
@@ -39,10 +40,9 @@ export async function POST(
     const options = generateScenesSchema.parse(body);
 
     // Get the selected script
-    const scripts = await getScriptsByProject(projectId);
     const selectedScript = options.scriptId
-      ? scripts.find((s: any) => s.id === options.scriptId)
-      : scripts.find((s: any) => s.isSelected);
+      ? await getScriptById(projectId, options.scriptId)
+      : await getSelectedScriptByProject(projectId);
 
     if (!selectedScript) {
       return NextResponse.json(

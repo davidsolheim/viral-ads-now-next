@@ -6,7 +6,12 @@ import { users } from './users';
 export const organizationRoleEnum = pgEnum('organization_role', ['owner', 'admin', 'member']);
 
 // Invitation status enum
-export const invitationStatusEnum = pgEnum('invitation_status', ['pending', 'accepted', 'declined']);
+export const invitationStatusEnum = pgEnum('invitation_status', [
+  'pending',
+  'accepted',
+  'declined',
+  'expired',
+]);
 
 // Organizations table
 export const organizations = pgTable('organizations', {
@@ -18,8 +23,10 @@ export const organizations = pgTable('organizations', {
   ownerId: varchar('ownerId', { length: 255 })
     .notNull()
     .references(() => users.id),
+  stripeCustomerId: varchar('stripeCustomerId', { length: 255 }),
   createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updatedAt', { mode: 'date' }).$onUpdate(() => new Date()),
+  deletedAt: timestamp('deletedAt', { mode: 'date' }),
 });
 
 // Organization members table (junction table)
@@ -50,6 +57,7 @@ export const invitations = pgTable('invitations', {
     .references(() => organizations.id, { onDelete: 'cascade' }),
   role: organizationRoleEnum('role').notNull().default('member'),
   status: invitationStatusEnum('status').notNull().default('pending'),
+  token: varchar('token', { length: 255 }).notNull().unique(),
   invitedById: varchar('invitedById', { length: 255 })
     .notNull()
     .references(() => users.id),
