@@ -46,6 +46,49 @@ export async function createProject(data: {
   return project;
 }
 
+export async function ensureDefaultOrganization(
+  userId: string,
+  organizationId: string
+) {
+  if (organizationId !== 'default-org') {
+    return;
+  }
+
+  const db = await getDb();
+  const [organization] = await db
+    .select()
+    .from(organizations)
+    .where(eq(organizations.id, organizationId))
+    .limit(1);
+
+  if (!organization) {
+    await db.insert(organizations).values({
+      id: organizationId,
+      name: 'Default Organization',
+      slug: 'default-org',
+      ownerId: userId,
+      createdAt: new Date(),
+    });
+  }
+
+  const [member] = await db
+    .select()
+    .from(organizationMembers)
+    .where(and(
+      eq(organizationMembers.userId, userId),
+      eq(organizationMembers.organizationId, organizationId)
+    ))
+    .limit(1);
+
+  if (!member) {
+    await db.insert(organizationMembers).values({
+      userId,
+      organizationId,
+      role: 'owner',
+    });
+  }
+}
+
 export async function getProject(projectId: string) {
   const db = await getDb();
   const [project] = await db
@@ -88,6 +131,17 @@ export async function updateProjectSettings(projectId: string, settings: any) {
   return updated;
 }
 
+export async function updateProjectProductUrl(projectId: string, productUrl: string) {
+  const db = await getDb();
+  const [updated] = await db
+    .update(projects)
+    .set({ productUrl, updatedAt: new Date() })
+    .where(eq(projects.id, projectId))
+    .returning();
+
+  return updated;
+}
+
 // Product Queries
 
 export async function createProduct(data: {
@@ -96,11 +150,13 @@ export async function createProduct(data: {
   description?: string;
   price?: string;
   originalPrice?: string;
+  currency?: string;
   category?: string;
   soldCount?: number;
   images?: string[];
   features?: string[];
   benefits?: string[];
+  url?: string;
 }) {
   const db = await getDb();
   const [product] = await db.insert(products).values({
@@ -110,12 +166,40 @@ export async function createProduct(data: {
     description: data.description,
     price: data.price,
     originalPrice: data.originalPrice,
+    currency: data.currency,
     category: data.category,
     soldCount: data.soldCount,
     images: data.images,
     features: data.features,
     benefits: data.benefits,
+    url: data.url,
   }).returning();
+
+  return product;
+}
+
+export async function updateProductByProject(
+  projectId: string,
+  data: {
+    name?: string;
+    description?: string;
+    price?: string;
+    originalPrice?: string;
+    currency?: string;
+    category?: string;
+    soldCount?: number;
+    images?: string[];
+    features?: string[];
+    benefits?: string[];
+    url?: string;
+  }
+) {
+  const db = await getDb();
+  const [product] = await db
+    .update(products)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(products.projectId, projectId))
+    .returning();
 
   return product;
 }

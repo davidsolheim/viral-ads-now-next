@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ProductStep } from './product-step';
 import { ScriptStep } from './script-step';
 import { ScenesStep } from './scenes-step';
 import { ImagesStep } from './images-step';
@@ -147,15 +148,10 @@ export function ProjectWizard({ project }: ProjectWizardProps) {
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="rounded-lg bg-white p-8 shadow-sm">
           {currentStepId === 'product' && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Product Details</h2>
-              <p className="mt-2 text-gray-600">
-                This step will be implemented to collect product information
-              </p>
-              <Button onClick={() => setActiveStep(activeStep + 1)} className="mt-6">
-                Continue to Script
-              </Button>
-            </div>
+            <ProductStep
+              projectId={project.id}
+              onNext={() => setActiveStep(activeStep + 1)}
+            />
           )}
 
           {currentStepId === 'script' && (

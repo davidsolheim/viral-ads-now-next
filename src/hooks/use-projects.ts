@@ -94,6 +94,34 @@ export function useGenerateScript(projectId: string) {
   });
 }
 
+export function useExtractProduct(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { url: string }) => {
+      const response = await fetch(`/api/projects/${projectId}/product`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to extract product data');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      toast.success('Product data extracted successfully!');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
 export function useGenerateScenes(projectId: string) {
   const queryClient = useQueryClient();
 

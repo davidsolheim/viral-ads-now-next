@@ -12,6 +12,93 @@ interface ProductData {
   benefits?: string[];
 }
 
+interface ExtractedProduct {
+  name: string;
+  description?: string;
+  price?: string;
+  originalPrice?: string;
+  currency?: string;
+  features?: string[];
+  benefits?: string[];
+  images?: string[];
+}
+
+export async function extractProductFromUrl(
+  content: string,
+  url: string
+): Promise<ExtractedProduct> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is not configured');
+  }
+
+  const prompt = `Extract product data from the following webpage content. Return only valid JSON with this structure:
+{
+  "name": "string",
+  "description": "string",
+  "price": "string",
+  "originalPrice": "string",
+  "currency": "string",
+  "features": ["string"],
+  "benefits": ["string"],
+  "images": ["string"]
+}
+
+Guidelines:
+- Use the product page content and URL as context.
+- Prefer concise, human-readable values.
+- If a field is unknown, omit it.
+- "images" should include absolute URLs if available.
+
+URL: ${url}
+
+Content:
+${content}`;
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You extract structured product data from webpage content. Return only valid JSON.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.2,
+        max_tokens: 800,
+        response_format: { type: 'json_object' },
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    const contentJson = data.choices[0]?.message?.content;
+
+    if (!contentJson) {
+      throw new Error('No product data generated from OpenAI');
+    }
+
+    return JSON.parse(contentJson);
+  } catch (error) {
+    console.error('Error extracting product data:', error);
+    throw error;
+  }
+}
+
 interface ScriptGenerationOptions {
   product: ProductData;
   style?: 'conversational' | 'energetic' | 'professional' | 'casual';

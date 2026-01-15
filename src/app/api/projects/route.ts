@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { createProject, getProjectsByOrganization } from '@/lib/db-queries';
+import {
+  createProject,
+  ensureDefaultOrganization,
+  getProjectsByOrganization,
+} from '@/lib/db-queries';
 import { z } from 'zod';
 
 const createProjectSchema = z.object({
@@ -20,6 +24,7 @@ export async function POST(request: NextRequest) {
     const validatedData = createProjectSchema.parse(body);
 
     // TODO: Check if user has access to the organization
+    await ensureDefaultOrganization(session.user.id, validatedData.organizationId);
 
     const project = await createProject({
       name: validatedData.name,
@@ -64,6 +69,7 @@ export async function GET(request: NextRequest) {
     }
 
     // TODO: Check if user has access to the organization
+    await ensureDefaultOrganization(session.user.id, organizationId);
 
     const projects = await getProjectsByOrganization(organizationId);
 
