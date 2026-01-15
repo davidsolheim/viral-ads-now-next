@@ -58,9 +58,9 @@ export async function POST(
 
     // Get all media assets
     const allAssets = await getMediaAssetsByProject(projectId);
-    const images = allAssets.filter(a => a.type === 'image');
-    const voiceovers = allAssets.filter(a => a.type === 'voiceover');
-    const music = allAssets.filter(a => a.type === 'music');
+    const images = allAssets.filter((a: any) => a.type === 'image');
+    const voiceovers = allAssets.filter((a: any) => a.type === 'voiceover');
+    const music = allAssets.filter((a: any) => a.type === 'music');
 
     if (images.length === 0) {
       return NextResponse.json(
@@ -70,9 +70,9 @@ export async function POST(
     }
 
     // Build video clips from images and scenes
-    const clips = scenes.map((scene) => {
-      const sceneImage = images.find(img => 
-        img.sceneId === scene.id || 
+    const clips = scenes.map((scene: any) => {
+      const sceneImage = images.find((img: any) =>
+        img.sceneId === scene.id ||
         (img.metadata as any)?.sceneNumber === scene.sceneNumber
       );
 
@@ -92,7 +92,7 @@ export async function POST(
     let captions = undefined;
     if (options.includeCaptions) {
       let currentTime = 0;
-      captions = scenes.map((scene) => {
+      captions = scenes.map((scene: any) => {
         const caption = {
           text: scene.scriptText,
           start: currentTime,
@@ -125,7 +125,7 @@ export async function POST(
     });
 
     // Calculate total duration
-    const totalDuration = clips.reduce((sum, clip) => sum + clip.duration, 0);
+    const totalDuration = clips.reduce((sum: number, clip: any) => sum + clip.duration, 0);
 
     // Save final video to database
     const finalVideo = await createFinalVideo({

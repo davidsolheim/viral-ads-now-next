@@ -47,7 +47,7 @@ export async function POST(
     const options = generateImagesSchema.parse(body);
 
     // Generate images for each scene in parallel
-    const imagePromises = scenes.map(async (scene) => {
+    const imagePromises = scenes.map(async (scene: any) => {
       try {
         // Generate image using Replicate
         const imageUrl = await generateImage({

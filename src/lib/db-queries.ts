@@ -3,19 +3,28 @@
  * Reusable database query functions with proper error handling
  */
 
-import { db } from '@/db';
-import { 
-  projects, 
-  products, 
-  scripts, 
-  scenes, 
-  mediaAssets, 
+import {
+  projects,
+  products,
+  scripts,
+  scenes,
+  mediaAssets,
   finalVideos,
   organizations,
   organizationMembers,
 } from '@/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+
+// Lazy import to avoid database initialization during build
+let db: any = null;
+const getDb = async () => {
+  if (!db) {
+    const { db: dbInstance } = await import('@/db');
+    db = dbInstance;
+  }
+  return db;
+};
 
 // Project Queries
 
@@ -24,6 +33,7 @@ export async function createProject(data: {
   organizationId: string;
   creatorId: string;
 }) {
+  const db = await getDb();
   const [project] = await db.insert(projects).values({
     id: createId(),
     name: data.name,
@@ -37,6 +47,7 @@ export async function createProject(data: {
 }
 
 export async function getProject(projectId: string) {
+  const db = await getDb();
   const [project] = await db
     .select()
     .from(projects)
@@ -47,6 +58,7 @@ export async function getProject(projectId: string) {
 }
 
 export async function getProjectsByOrganization(organizationId: string) {
+  const db = await getDb();
   return await db
     .select()
     .from(projects)
@@ -55,6 +67,7 @@ export async function getProjectsByOrganization(organizationId: string) {
 }
 
 export async function updateProjectStep(projectId: string, step: string) {
+  const db = await getDb();
   const [updated] = await db
     .update(projects)
     .set({ currentStep: step, updatedAt: new Date() })
@@ -65,6 +78,7 @@ export async function updateProjectStep(projectId: string, step: string) {
 }
 
 export async function updateProjectSettings(projectId: string, settings: any) {
+  const db = await getDb();
   const [updated] = await db
     .update(projects)
     .set({ settings, updatedAt: new Date() })
@@ -88,6 +102,7 @@ export async function createProduct(data: {
   features?: string[];
   benefits?: string[];
 }) {
+  const db = await getDb();
   const [product] = await db.insert(products).values({
     id: createId(),
     projectId: data.projectId,
@@ -106,6 +121,7 @@ export async function createProduct(data: {
 }
 
 export async function getProductByProject(projectId: string) {
+  const db = await getDb();
   const [product] = await db
     .select()
     .from(products)
@@ -122,6 +138,7 @@ export async function createScript(data: {
   content: string;
   isSelected?: boolean;
 }) {
+  const db = await getDb();
   const [script] = await db.insert(scripts).values({
     id: createId(),
     projectId: data.projectId,
@@ -134,6 +151,7 @@ export async function createScript(data: {
 }
 
 export async function getScriptsByProject(projectId: string) {
+  const db = await getDb();
   return await db
     .select()
     .from(scripts)
@@ -142,6 +160,7 @@ export async function getScriptsByProject(projectId: string) {
 }
 
 export async function selectScript(scriptId: string, projectId: string) {
+  const db = await getDb();
   // Deselect all scripts for this project
   await db
     .update(scripts)
@@ -166,6 +185,7 @@ export async function createScene(data: {
   scriptText: string;
   visualDescription: string;
 }) {
+  const db = await getDb();
   const [scene] = await db.insert(scenes).values({
     id: createId(),
     projectId: data.projectId,
@@ -179,6 +199,7 @@ export async function createScene(data: {
 }
 
 export async function getScenesByProject(projectId: string) {
+  const db = await getDb();
   return await db
     .select()
     .from(scenes)
@@ -187,6 +208,7 @@ export async function getScenesByProject(projectId: string) {
 }
 
 export async function deleteScenesByProject(projectId: string) {
+  const db = await getDb();
   await db.delete(scenes).where(eq(scenes.projectId, projectId));
 }
 
@@ -199,6 +221,7 @@ export async function createMediaAsset(data: {
   url: string;
   metadata?: any;
 }) {
+  const db = await getDb();
   const [asset] = await db.insert(mediaAssets).values({
     id: createId(),
     projectId: data.projectId,
@@ -213,6 +236,7 @@ export async function createMediaAsset(data: {
 }
 
 export async function getMediaAssetsByProject(projectId: string, type?: string) {
+  const db = await getDb();
   if (type) {
     return await db
       .select()
@@ -232,6 +256,7 @@ export async function getMediaAssetsByProject(projectId: string, type?: string) 
 }
 
 export async function getMediaAssetsByScene(sceneId: string) {
+  const db = await getDb();
   return await db
     .select()
     .from(mediaAssets)
@@ -248,6 +273,7 @@ export async function createFinalVideo(data: {
   resolution?: string;
   metadata?: any;
 }) {
+  const db = await getDb();
   const [video] = await db.insert(finalVideos).values({
     id: createId(),
     projectId: data.projectId,
@@ -262,6 +288,7 @@ export async function createFinalVideo(data: {
 }
 
 export async function getFinalVideosByProject(projectId: string) {
+  const db = await getDb();
   return await db
     .select()
     .from(finalVideos)
@@ -272,6 +299,7 @@ export async function getFinalVideosByProject(projectId: string) {
 // Organization Queries
 
 export async function getUserOrganizations(userId: string) {
+  const db = await getDb();
   return await db
     .select({
       organization: organizations,
@@ -284,6 +312,7 @@ export async function getUserOrganizations(userId: string) {
 }
 
 export async function getOrganizationMembers(organizationId: string) {
+  const db = await getDb();
   return await db
     .select()
     .from(organizationMembers)
@@ -291,6 +320,7 @@ export async function getOrganizationMembers(organizationId: string) {
 }
 
 export async function checkUserOrganizationAccess(userId: string, organizationId: string) {
+  const db = await getDb();
   const [member] = await db
     .select()
     .from(organizationMembers)

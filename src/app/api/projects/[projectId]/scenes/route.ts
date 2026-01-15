@@ -41,8 +41,8 @@ export async function POST(
     // Get the selected script
     const scripts = await getScriptsByProject(projectId);
     const selectedScript = options.scriptId
-      ? scripts.find(s => s.id === options.scriptId)
-      : scripts.find(s => s.isSelected);
+      ? scripts.find((s: any) => s.id === options.scriptId)
+      : scripts.find((s: any) => s.isSelected);
 
     if (!selectedScript) {
       return NextResponse.json(
