@@ -2,9 +2,9 @@
 # Database
 DATABASE_URL='your_neon_database_url_here'
 
-# Auth
-NEXTAUTH_URL='https://your-app-name.vercel.app'
-NEXTAUTH_SECRET='your_random_secret_here'
+# Auth (Auth.js v5)
+AUTH_SECRET='your_random_secret_here'  # Generate with: openssl rand -base64 32
+AUTH_URL='https://your-app-name.vercel.app'  # Optional, auto-detected on Vercel
 
 # Google OAuth
 GOOGLE_CLIENT_ID='your_google_client_id'
