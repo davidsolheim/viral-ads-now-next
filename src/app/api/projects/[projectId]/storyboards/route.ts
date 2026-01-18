@@ -136,11 +136,6 @@ export async function POST(
           projectId,
           content: scriptContent,
           isSelected: false,
-          metadata: {
-            candidateIndex: index,
-            duration,
-            aspectRatio,
-          },
         });
         console.log(`[${projectId}] Storyboard ${index + 1}: Script saved (${script.id})`);
 
@@ -192,8 +187,8 @@ export async function POST(
               metadata: {
                 scriptId: script.id,
                 sceneId: createdScene.id,
-                sceneNumber: scene.sceneNumber,
-                isPreview: true,
+                sceneNumber: scene.sceneNumber.toString(),
+                isPreview: 'true',
               },
             });
 

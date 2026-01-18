@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { getUserOrganizations, createOrganization, checkUserOrganizationAccess } from '@/lib/db-queries';
+import { getUserOrganizations, createOrganization, checkUserOrganizationAccess, switchActiveOrganization } from '@/lib/db-queries';
 import { z } from 'zod';
 
 const createOrganizationSchema = z.object({
@@ -52,7 +52,16 @@ export async function POST(request: NextRequest) {
       ownerId: session.user.id,
     });
 
-    return NextResponse.json({ organization }, { status: 201 });
+    // Switch user to the newly created organization
+    const updatedUser = await switchActiveOrganization(session.user.id, organization.id);
+
+    return NextResponse.json({
+      organization,
+      user: {
+        id: updatedUser.id,
+        activeOrganizationId: updatedUser.activeOrganizationId,
+      }
+    }, { status: 201 });
   } catch (error) {
     console.error('Error creating organization:', error);
 

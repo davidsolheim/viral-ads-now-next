@@ -26,9 +26,11 @@ import {
   tiktokShopCreators,
   tiktokShopEngagement,
   tiktokShopRefreshQueue,
+  referrals,
 } from '@/db/schema';
-import { eq, and, desc, isNull, or, sql, gte, lte, lt } from 'drizzle-orm';
+import { eq, and, desc, isNull, or, sql, gte, lte, lt, count, like, asc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { calculateTrendingScore } from '@/lib/tiktok-shop/recommendations';
 
 // Lazy import to avoid database initialization during build
 let db: any = null;
@@ -46,6 +48,7 @@ export async function createProject(data: {
   name: string;
   organizationId: string;
   creatorId: string;
+  productUrl?: string;
 }) {
   const db = await getDb();
   const [project] = await db.insert(projects).values({
@@ -53,6 +56,7 @@ export async function createProject(data: {
     name: data.name,
     organizationId: data.organizationId,
     creatorId: data.creatorId,
+    productUrl: data.productUrl,
     currentStep: 'product',
     createdAt: new Date(),
   }).returning();
@@ -1398,7 +1402,7 @@ export async function checkSubscriptionLimits(organizationId: string) {
   
   // Calculate total usage by type
   const usageByType: Record<string, number> = {};
-  usageRecords.forEach(record => {
+  usageRecords.forEach((record: { type: string; units: number }) => {
     usageByType[record.type] = (usageByType[record.type] || 0) + record.units;
   });
 
@@ -1545,9 +1549,21 @@ export async function createTikTokShopProduct(data: {
   totalViews?: number;
   totalSales?: number;
   engagementRate?: string;
+  averageRating?: string | number;
+  totalReviews?: number;
+  ratingDistribution?: Record<string, number>;
   metadata?: any;
 }) {
   const db = await getDb();
+
+  // Calculate trending score before insert/update
+  const productDataForScore = {
+    engagementRate: data.engagementRate || '0',
+    totalViews: data.totalViews || 0,
+    totalSales: data.totalSales || 0,
+    lastUpdated: new Date(),
+  };
+  const trendingScore = calculateTrendingScore(productDataForScore).toFixed(2);
 
   const [product] = await db
     .insert(tiktokShopProducts)
@@ -1567,6 +1583,10 @@ export async function createTikTokShopProduct(data: {
       totalViews: data.totalViews || 0,
       totalSales: data.totalSales || 0,
       engagementRate: data.engagementRate || null,
+      trendingScore: trendingScore,
+      averageRating: data.averageRating ? (typeof data.averageRating === 'string' ? data.averageRating : data.averageRating.toString()) : null,
+      totalReviews: data.totalReviews || 0,
+      ratingDistribution: data.ratingDistribution || null,
       metadata: data.metadata || null,
       lastUpdated: new Date(),
     })
@@ -1576,15 +1596,21 @@ export async function createTikTokShopProduct(data: {
         name: sql`EXCLUDED.name`,
         description: sql`EXCLUDED.description`,
         price: sql`EXCLUDED.price`,
-        originalPrice: sql`EXCLUDED.originalPrice`,
+        originalPrice: sql`EXCLUDED."originalPrice"`,
         currency: sql`EXCLUDED.currency`,
-        sellerId: sql`EXCLUDED.seller_id`,
-        sellerName: sql`EXCLUDED.seller_name`,
+        sellerId: sql`EXCLUDED."sellerId"`,
+        sellerName: sql`EXCLUDED."sellerName"`,
         category: sql`EXCLUDED.category`,
         images: sql`EXCLUDED.images`,
-        totalViews: sql`EXCLUDED.total_views`,
-        totalSales: sql`EXCLUDED.total_sales`,
-        engagementRate: sql`EXCLUDED.engagement_rate`,
+        totalViews: sql`EXCLUDED."totalViews"`,
+        totalSales: sql`EXCLUDED."totalSales"`,
+        engagementRate: sql`EXCLUDED."engagementRate"`,
+        trendingScore: trendingScore,
+        averageRating: data.averageRating !== undefined 
+          ? (typeof data.averageRating === 'string' ? data.averageRating : data.averageRating.toString())
+          : sql`EXCLUDED."averageRating"`,
+        totalReviews: data.totalReviews !== undefined ? data.totalReviews : sql`EXCLUDED."totalReviews"`,
+        ratingDistribution: data.ratingDistribution !== undefined ? data.ratingDistribution : sql`EXCLUDED."ratingDistribution"`,
         metadata: sql`EXCLUDED.metadata`,
         lastUpdated: new Date(),
         updatedAt: new Date(),
@@ -1606,18 +1632,53 @@ export async function updateTikTokShopProduct(
     totalSales?: number;
     engagementRate?: string;
     trendingScore?: string;
+    averageRating?: string | number;
+    totalReviews?: number;
+    ratingDistribution?: Record<string, number>;
     metadata?: any;
   }
 ) {
   const db = await getDb();
 
+  // Get existing product to calculate trending score with updated data
+  const [existingProduct] = await db
+    .select()
+    .from(tiktokShopProducts)
+    .where(eq(tiktokShopProducts.tiktokProductId, tiktokProductId))
+    .limit(1);
+
+  if (!existingProduct) {
+    throw new Error(`Product with tiktokProductId ${tiktokProductId} not found`);
+  }
+
+  // Merge existing data with update data for score calculation
+  const productDataForScore = {
+    engagementRate: data.engagementRate ?? existingProduct.engagementRate ?? '0',
+    totalViews: data.totalViews ?? existingProduct.totalViews ?? 0,
+    totalSales: data.totalSales ?? existingProduct.totalSales ?? 0,
+    lastUpdated: new Date(),
+  };
+  
+  // Calculate trending score (unless explicitly provided)
+  const trendingScore = data.trendingScore ?? calculateTrendingScore(productDataForScore).toFixed(2);
+
+  // Convert averageRating to string if provided as number
+  const updateData: any = {
+    ...data,
+    trendingScore: trendingScore,
+    lastUpdated: new Date(),
+    updatedAt: new Date(),
+  };
+  
+  if (data.averageRating !== undefined) {
+    updateData.averageRating = typeof data.averageRating === 'string' 
+      ? data.averageRating 
+      : data.averageRating.toString();
+  }
+
   const [product] = await db
     .update(tiktokShopProducts)
-    .set({
-      ...data,
-      lastUpdated: new Date(),
-      updatedAt: new Date(),
-    })
+    .set(updateData)
     .where(eq(tiktokShopProducts.tiktokProductId, tiktokProductId))
     .returning();
 
@@ -1825,4 +1886,638 @@ export async function getTikTokShopProductByTikTokId(tiktokProductId: string) {
     .limit(1);
 
   return product;
+}
+
+// Referral Queries
+
+/**
+ * Get or create a referral code for a user
+ */
+export async function getOrCreateUserReferralCode(userId: string) {
+  const db = await getDb();
+
+  // Check if user already has a referral code
+  const existingReferral = await db
+    .select()
+    .from(referrals)
+    .where(eq(referrals.referrerId, userId))
+    .limit(1);
+
+  if (existingReferral.length > 0) {
+    return existingReferral[0];
+  }
+
+  // Generate a unique referral code
+  let referralCode: string;
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  do {
+    // Generate code: REF-{first 8 chars of userId}
+    referralCode = `REF-${userId.slice(0, 8).toUpperCase()}`;
+    attempts++;
+
+    // Check if code already exists
+    const existing = await db
+      .select()
+      .from(referrals)
+      .where(eq(referrals.referralCode, referralCode))
+      .limit(1);
+
+    if (existing.length === 0) {
+      break;
+    }
+
+    // If code exists, add random suffix
+    if (attempts < maxAttempts) {
+      referralCode = `REF-${userId.slice(0, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    } else {
+      // Fallback to full random code
+      referralCode = `REF-${createId().slice(0, 12).toUpperCase()}`;
+    }
+  } while (attempts < maxAttempts);
+
+  // Create new referral record
+  const [newReferral] = await db
+    .insert(referrals)
+    .values({
+      id: createId(),
+      referrerId: userId,
+      referralCode,
+      status: 'pending',
+      createdAt: new Date(),
+    })
+    .returning();
+
+  return newReferral;
+}
+
+/**
+ * Get referral by code
+ */
+export async function getReferralByCode(code: string) {
+  const db = await getDb();
+
+  const [referral] = await db
+    .select()
+    .from(referrals)
+    .where(eq(referrals.referralCode, code))
+    .limit(1);
+
+  return referral || null;
+}
+
+/**
+ * Update user's referral code
+ */
+export async function updateUserReferralCode(userId: string, newCode: string) {
+  const db = await getDb();
+
+  // Check if code is already taken by another user
+  const existingReferral = await getReferralByCode(newCode);
+  if (existingReferral && existingReferral.referrerId !== userId) {
+    throw new Error('Referral code is already taken');
+  }
+
+  // Get user's current referral
+  const [userReferral] = await db
+    .select()
+    .from(referrals)
+    .where(eq(referrals.referrerId, userId))
+    .limit(1);
+
+  if (!userReferral) {
+    throw new Error('Referral not found');
+  }
+
+  // Update the referral code
+  const [updated] = await db
+    .update(referrals)
+    .set({
+      referralCode: newCode,
+    })
+    .where(eq(referrals.id, userReferral.id))
+    .returning();
+
+  return updated;
+}
+
+/**
+ * Create a referral record when someone signs up with a referral code
+ */
+export async function createReferralRecord(data: {
+  referrerId: string;
+  referredUserId: string;
+  referralCode: string;
+}) {
+  const db = await getDb();
+
+  // Check if referral record already exists
+  const existing = await db
+    .select()
+    .from(referrals)
+    .where(
+      and(
+        eq(referrals.referrerId, data.referrerId),
+        eq(referrals.referredUserId, data.referredUserId)
+      )
+    )
+    .limit(1);
+
+  if (existing.length > 0) {
+    return existing[0];
+  }
+
+  // Create new referral record
+  const [newReferral] = await db
+    .insert(referrals)
+    .values({
+      id: createId(),
+      referrerId: data.referrerId,
+      referredUserId: data.referredUserId,
+      referralCode: data.referralCode,
+      status: 'pending',
+      createdAt: new Date(),
+    })
+    .returning();
+
+  return newReferral;
+}
+
+/**
+ * Process ongoing referral reward when referred user makes a purchase or subscription payment
+ * Awards 20% of the purchase amount as credits to the referrer
+ * Works for both one-time purchases and recurring subscription payments
+ */
+export async function processReferralReward(
+  referredUserId: string,
+  purchaseAmount: number, // Amount in dollars
+  organizationId: string, // Organization that made the purchase
+  description?: string,
+  isSubscriptionPayment?: boolean // True if this is a recurring subscription payment
+) {
+  const db = await getDb();
+
+  // Find referral for this user (can be pending, claimed, or rewarded - we process ongoing rewards)
+  const [referral] = await db
+    .select()
+    .from(referrals)
+    .where(eq(referrals.referredUserId, referredUserId))
+    .limit(1);
+
+  if (!referral) {
+    return null; // No referral found
+  }
+
+  // For subscription payments, check if the referred user has an active subscription
+  if (isSubscriptionPayment) {
+    const subscription = await getSubscriptionByOrganizationId(organizationId);
+    if (!subscription || (subscription.status !== 'active' && subscription.status !== 'trialing' && subscription.status !== 'past_due')) {
+      return null; // User doesn't have active subscription, no reward
+    }
+  }
+
+  // Calculate 20% reward (in credits, assuming $0.01 per credit)
+  // If purchaseAmount is in dollars, convert to credits first, then take 20%
+  const creditsFromPurchase = purchaseAmount * 100; // $0.01 per credit (1 penny = 1 credit)
+  const rewardCredits = Math.floor(creditsFromPurchase * 0.2); // 20% of credits
+
+  if (rewardCredits <= 0) {
+    return null; // No reward if amount is too small
+  }
+
+  // Get referrer's organization
+  const referrerOrgs = await getUserOrganizations(referral.referrerId);
+  if (referrerOrgs.length === 0) {
+    return null; // Referrer has no organization
+  }
+
+  const referrerOrgId = referrerOrgs[0].organization.id;
+
+  // Update referral record - accumulate total rewards
+  const currentRewardAmount = referral.rewardCreditAmount || 0;
+  const newTotalReward = currentRewardAmount + rewardCredits;
+
+  // Update status: pending -> claimed (first reward), keep as claimed/rewarded for ongoing
+  let newStatus = referral.status;
+  if (referral.status === 'pending') {
+    newStatus = 'claimed';
+    await db
+      .update(referrals)
+      .set({
+        status: 'claimed',
+        rewardCreditAmount: newTotalReward,
+        claimedAt: new Date(),
+      })
+      .where(eq(referrals.id, referral.id));
+  } else {
+    // Ongoing reward - update total and mark as rewarded if not already
+    await db
+      .update(referrals)
+      .set({
+        rewardCreditAmount: newTotalReward,
+        status: 'rewarded',
+        rewardedAt: new Date(),
+      })
+      .where(eq(referrals.id, referral.id));
+  }
+
+  // Award credits to referrer's organization
+  await createCreditTransaction({
+    organizationId: referrerOrgId,
+    userId: referral.referrerId,
+    type: 'bonus',
+    amount: rewardCredits.toString(),
+    description: description || `Referral reward: 20% of $${purchaseAmount.toFixed(2)} ${isSubscriptionPayment ? 'subscription payment' : 'purchase'}`,
+  });
+
+  return {
+    referralId: referral.id,
+    rewardCredits,
+    totalRewards: newTotalReward,
+    referrerOrgId,
+  };
+}
+
+/**
+ * Update referral status
+ */
+export async function updateReferralStatus(
+  referralId: string,
+  status: 'pending' | 'claimed' | 'rewarded'
+) {
+  const db = await getDb();
+
+  const updateData: any = {
+    status,
+  };
+
+  if (status === 'claimed') {
+    updateData.claimedAt = new Date();
+  } else if (status === 'rewarded') {
+    updateData.rewardedAt = new Date();
+  }
+
+  const [updated] = await db
+    .update(referrals)
+    .set(updateData)
+    .where(eq(referrals.id, referralId))
+    .returning();
+
+  return updated;
+}
+
+/**
+ * Get user referral statistics
+ */
+export async function getUserReferralStats(userId: string) {
+  const db = await getDb();
+
+  // Get user's referral code
+  const userReferral = await db
+    .select()
+    .from(referrals)
+    .where(eq(referrals.referrerId, userId))
+    .limit(1);
+
+  if (userReferral.length === 0) {
+    return {
+      referralCode: null,
+      totalReferrals: 0,
+      pendingCount: 0,
+      claimedCount: 0,
+      rewardedCount: 0,
+      totalRewards: 0,
+    };
+  }
+
+  const referralId = userReferral[0].id;
+
+  // Count referrals by status
+  const [pendingResult] = await db
+    .select({ count: count() })
+    .from(referrals)
+    .where(and(eq(referrals.referrerId, userId), eq(referrals.status, 'pending')));
+
+  const [claimedResult] = await db
+    .select({ count: count() })
+    .from(referrals)
+    .where(and(eq(referrals.referrerId, userId), eq(referrals.status, 'claimed')));
+
+  const [rewardedResult] = await db
+    .select({ count: count() })
+    .from(referrals)
+    .where(and(eq(referrals.referrerId, userId), eq(referrals.status, 'rewarded')));
+
+  // Get total rewards (sum of all rewardCreditAmount, including ongoing rewards)
+  const rewardsResult = await db
+    .select({
+      total: sql<number>`COALESCE(SUM(${referrals.rewardCreditAmount}), 0)`,
+    })
+    .from(referrals)
+    .where(
+      and(
+        eq(referrals.referrerId, userId),
+        sql`${referrals.rewardCreditAmount} IS NOT NULL`
+      )
+    );
+
+  const totalRewards = Number(rewardsResult[0]?.total || 0);
+
+  return {
+    referralCode: userReferral[0].referralCode,
+    totalReferrals: pendingResult.count + claimedResult.count + rewardedResult.count,
+    pendingCount: pendingResult.count,
+    claimedCount: claimedResult.count,
+    rewardedCount: rewardedResult.count,
+    totalRewards,
+  };
+}
+
+/**
+ * Get all affiliates with pagination and filtering (Admin)
+ */
+export async function getAllAffiliates(filters?: {
+  page?: number;
+  limit?: number;
+  status?: 'pending' | 'claimed' | 'rewarded';
+  search?: string;
+  sortBy?: 'createdAt' | 'referralsCount' | 'rewards';
+  sortOrder?: 'asc' | 'desc';
+}) {
+  const db = await getDb();
+
+  const page = filters?.page || 1;
+  const limit = filters?.limit || 20;
+  const offset = (page - 1) * limit;
+
+  // First, get all unique referrer IDs
+  let referrerIds: string[] = [];
+
+  if (filters?.search) {
+    // Search by referral code
+    const codeMatches = await db
+      .selectDistinct({ referrerId: referrals.referrerId })
+      .from(referrals)
+      .where(like(referrals.referralCode, `%${filters.search}%`));
+
+    // Search by user name/email
+    const matchingUsers = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(
+        or(
+          like(users.name, `%${filters.search}%`),
+          like(users.email, `%${filters.search}%`)
+        )
+      );
+
+    const matchingUserIds = matchingUsers.map((u: { id: string }) => u.id);
+
+    if (matchingUserIds.length > 0) {
+      const userMatches = await db
+        .selectDistinct({ referrerId: referrals.referrerId })
+        .from(referrals)
+        .where(sql`${referrals.referrerId} IN (${sql.join(matchingUserIds.map((id: string) => sql`${id}`), sql`, `)})`);
+
+      const allMatches = [...codeMatches, ...userMatches];
+      referrerIds = Array.from(new Set(allMatches.map((r: { referrerId: string }) => r.referrerId)));
+    } else {
+      referrerIds = codeMatches.map((r: { referrerId: string }) => r.referrerId);
+    }
+  } else {
+    // Get all unique referrer IDs
+    const referrerIdsResult = await db
+      .selectDistinct({ referrerId: referrals.referrerId })
+      .from(referrals);
+    
+    referrerIds = referrerIdsResult.map((r: { referrerId: string }) => r.referrerId);
+  }
+
+  if (referrerIds.length === 0) {
+    return {
+      affiliates: [],
+      pagination: {
+        page,
+        limit,
+        total: 0,
+        totalPages: 0,
+      },
+    };
+  }
+
+  // Get stats for each referrer
+  const affiliatesData = await Promise.all(
+    referrerIds.map(async (referrerId: string) => {
+      // Get first referral (for code and created date)
+      const [firstReferral] = await db
+        .select()
+        .from(referrals)
+        .where(eq(referrals.referrerId, referrerId))
+        .orderBy(asc(referrals.createdAt))
+        .limit(1);
+
+      // Count total referrals
+      const [totalCount] = await db
+        .select({ count: count() })
+        .from(referrals)
+        .where(eq(referrals.referrerId, referrerId));
+
+      // Count by status
+      const statusCounts = await db
+        .select({
+          status: referrals.status,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(referrals)
+        .where(eq(referrals.referrerId, referrerId))
+        .groupBy(referrals.status);
+
+      // Get total rewards
+      const [rewardsResult] = await db
+        .select({
+          total: sql<number>`COALESCE(SUM(${referrals.rewardCreditAmount}), 0)`,
+        })
+        .from(referrals)
+        .where(and(eq(referrals.referrerId, referrerId), eq(referrals.status, 'rewarded')));
+
+      // Get user info
+      const [user] = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          image: users.image,
+        })
+        .from(users)
+        .where(eq(users.id, referrerId))
+        .limit(1);
+
+      const statusBreakdown: Record<string, number> = {};
+      statusCounts.forEach((item: { status: string; count: number }) => {
+        statusBreakdown[item.status] = item.count;
+      });
+
+      return {
+        referrerId,
+        referralCode: firstReferral?.referralCode || '',
+        createdAt: firstReferral?.createdAt || new Date(),
+        referralsCount: Number(totalCount?.count || 0),
+        totalRewards: Number(rewardsResult?.total || 0),
+        user: user || null,
+        statusBreakdown,
+      };
+    })
+  );
+
+  // Apply status filter if provided
+  let filteredData = affiliatesData;
+  if (filters?.status) {
+    filteredData = affiliatesData.filter((affiliate) => {
+      return affiliate.statusBreakdown[filters.status!] > 0;
+    });
+  }
+
+  // Sort
+  const sortBy = filters?.sortBy || 'createdAt';
+  const sortOrder = filters?.sortOrder || 'desc';
+
+  filteredData.sort((a, b) => {
+    let comparison = 0;
+    if (sortBy === 'createdAt') {
+      comparison = a.createdAt.getTime() - b.createdAt.getTime();
+    } else if (sortBy === 'referralsCount') {
+      comparison = a.referralsCount - b.referralsCount;
+    } else if (sortBy === 'rewards') {
+      comparison = a.totalRewards - b.totalRewards;
+    }
+
+    return sortOrder === 'asc' ? comparison : -comparison;
+  });
+
+  // Paginate
+  const total = filteredData.length;
+  const paginatedData = filteredData.slice(offset, offset + limit);
+
+  return {
+    affiliates: paginatedData,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+/**
+ * Update affiliate commission/reward amount
+ */
+export async function updateAffiliateCommission(referralId: string, amount: number) {
+  const db = await getDb();
+
+  const [updated] = await db
+    .update(referrals)
+    .set({
+      rewardCreditAmount: amount,
+    })
+    .where(eq(referrals.id, referralId))
+    .returning();
+
+  return updated;
+}
+
+/**
+ * Get affiliate performance metrics (Admin)
+ */
+export async function getAffiliatePerformanceMetrics() {
+  const db = await getDb();
+
+  // Total affiliates
+  const [totalAffiliatesResult] = await db
+    .select({ count: sql<number>`COUNT(DISTINCT ${referrals.referrerId})` })
+    .from(referrals);
+
+  // Active affiliates (those with at least one referral)
+  const [activeAffiliatesResult] = await db
+    .select({ count: sql<number>`COUNT(DISTINCT ${referrals.referrerId})` })
+    .from(referrals)
+    .where(sql`${referrals.referredUserId} IS NOT NULL`);
+
+  // Total referrals
+  const [totalReferralsResult] = await db
+    .select({ count: count() })
+    .from(referrals)
+    .where(sql`${referrals.referredUserId} IS NOT NULL`);
+
+  // Total rewards paid
+  const [totalRewardsResult] = await db
+    .select({
+      total: sql<number>`COALESCE(SUM(${referrals.rewardCreditAmount}), 0)`,
+    })
+    .from(referrals)
+    .where(eq(referrals.status, 'rewarded'));
+
+  // Status breakdown
+  const statusBreakdown = await db
+    .select({
+      status: referrals.status,
+      count: sql<number>`COUNT(*)`,
+    })
+    .from(referrals)
+    .groupBy(referrals.status);
+
+  return {
+    totalAffiliates: Number(totalAffiliatesResult?.count || 0),
+    activeAffiliates: Number(activeAffiliatesResult?.count || 0),
+    totalReferrals: Number(totalReferralsResult?.count || 0),
+    totalRewardsPaid: Number(totalRewardsResult?.total || 0),
+    statusBreakdown: statusBreakdown.reduce((acc: Record<string, number>, item: { status: string; count: number }) => {
+      acc[item.status] = item.count;
+      return acc;
+    }, {} as Record<string, number>),
+  };
+}
+
+/**
+ * Get all referrals for a specific affiliate
+ */
+export async function getAffiliateReferrals(referrerId: string) {
+  const db = await getDb();
+
+  const affiliateReferrals = await db
+    .select()
+    .from(referrals)
+    .where(eq(referrals.referrerId, referrerId))
+    .orderBy(desc(referrals.createdAt));
+
+  // Enrich with referred user data
+  const enriched = await Promise.all(
+    affiliateReferrals.map(async (referral: { id: string; referrerId: string; referredUserId: string | null; referralCode: string; status: 'pending' | 'claimed' | 'rewarded'; rewardCreditAmount: number | null; claimedAt: Date | null; rewardedAt: Date | null; createdAt: Date }) => {
+      if (!referral.referredUserId) {
+        return {
+          ...referral,
+          referredUser: null,
+        };
+      }
+
+      const [referredUser] = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          image: users.image,
+        })
+        .from(users)
+        .where(eq(users.id, referral.referredUserId))
+        .limit(1);
+
+      return {
+        ...referral,
+        referredUser: referredUser || null,
+      };
+    })
+  );
+
+  return enriched;
 }

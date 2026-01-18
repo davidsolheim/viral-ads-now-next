@@ -15,6 +15,7 @@ interface Project {
 interface CreateProjectData {
   name: string;
   organizationId: string;
+  productUrl?: string;
 }
 
 export function useProjects(organizationId?: string) {

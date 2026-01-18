@@ -26,16 +26,23 @@ Before deploying, ensure you have:
 - Verify your sending domain
 - Copy API key and set FROM email
 
-### 3. OpenAI
+### 3. OpenAI (Text AI)
 - Sign up at [platform.openai.com](https://platform.openai.com)
 - Create an API key
 - Ensure you have credits available
+- This key will be used as `TEXT_AI_API_KEY`
 
-### 4. Replicate
+### 4. Replicate (Image AI)
 - Sign up at [replicate.com](https://replicate.com)
 - Go to Account Settings → API Tokens
 - Create a new token
 - Copy the token
+- This key will be used as `IMAGE_AI_API_KEY`
+
+### 4b. Kling (Video AI)
+- Sign up at [klingai.com](https://klingai.com) (or your video AI provider)
+- Create an API key
+- This key will be used as `VIDEO_AI_API_KEY`
 
 ### 5. Shotstack
 - Sign up at [shotstack.io](https://shotstack.io)
@@ -81,11 +88,10 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 RESEND_API_KEY=re_xxx
 RESEND_FROM_EMAIL=noreply@yourdomain.com
 
-# OpenAI
-OPENAI_API_KEY=sk-xxx
-
-# Replicate
-REPLICATE_API_TOKEN=r8_xxx
+# AI Services
+TEXT_AI_API_KEY=sk-xxx  # OpenAI API key for text generation
+IMAGE_AI_API_KEY=r8_xxx  # Replicate API token for image generation
+VIDEO_AI_API_KEY=xxx  # Kling API key for video generation
 
 # Wasabi
 WASABI_ACCESS_KEY_ID=xxx

@@ -1,19 +1,27 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loading } from '@/components/ui/loading';
 import toast from 'react-hot-toast';
 import { TrendingProduct } from '@/lib/tiktok-shop/recommendations';
+import { initTikTokShopCollector } from '@/lib/tiktok-shop/collector';
 
 type SortOption = 'trending' | 'views' | 'sales' | 'price-asc' | 'price-desc';
 
-export function TrendingProductsClient() {
+interface TrendingProductsClientProps {
+  initialCategory?: string;
+  platform?: string;
+}
+
+export function TrendingProductsClient({ initialCategory = '', platform = 'tiktok' }: TrendingProductsClientProps) {
+  const router = useRouter();
   const [products, setProducts] = useState<TrendingProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState(initialCategory);
   const [maxPrice, setMaxPrice] = useState('');
   const [minTrendingScore, setMinTrendingScore] = useState('10');
   const [sortBy, setSortBy] = useState<SortOption>('trending');
@@ -63,6 +71,28 @@ export function TrendingProductsClient() {
   useEffect(() => {
     fetchProducts();
   }, [category, maxPrice, minTrendingScore, limit]);
+
+  // Sync category from URL if provided
+  useEffect(() => {
+    if (initialCategory) {
+      setCategory(initialCategory);
+    }
+  }, [initialCategory]);
+
+  // Initialize TikTok Shop collector when component mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const collector = initTikTokShopCollector({
+        enabled: true,
+        autoCollect: false, // Don't auto-collect on this page
+      });
+      
+      // Start automatic collection of TikTok Shop data
+      if (collector) {
+        collector.startAutomaticCollection();
+      }
+    }
+  }, []);
 
   // Filter and sort products
   const filteredAndSortedProducts = useMemo(() => {
@@ -138,6 +168,11 @@ export function TrendingProductsClient() {
     return Array.from(categories).sort();
   }, [products]);
 
+  const handleCategoryClick = (categoryName: string) => {
+    const encodedCategory = encodeURIComponent(categoryName);
+    router.push(`/dashboard/trending/${platform}/${encodedCategory}`);
+  };
+
   if (isLoading && products.length === 0) {
     return (
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -156,6 +191,47 @@ export function TrendingProductsClient() {
         <p className="mt-2 text-gray-600">
           Discover trending products from TikTok Shop with engagement metrics and insights
         </p>
+        
+        {/* TikTok Shop Link */}
+        <div className="mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open('https://www.tiktok.com/shop', '_blank', 'noopener,noreferrer')}
+            className="flex items-center gap-2"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-.88-.05 6.33 6.33 0 0 0-5.23 2.84 6.05 6.05 0 0 0 .86 8.35 5.89 5.89 0 0 0 4.15 1.68 6.33 6.33 0 0 0 5.93-4.11 6.05 6.05 0 0 0 .29-1.85V7.44a4.85 4.85 0 0 0 3.78 4.28v-3.4a4.84 4.84 0 0 1-1-.63z"/>
+            </svg>
+            Visit TikTok Shop
+          </Button>
+        </div>
+
+        {/* Category Chips */}
+        {getUniqueCategories.length > 0 && (
+          <div className="mt-6">
+            <h2 className="mb-3 text-sm font-medium text-gray-700">Browse by Category</h2>
+            <div className="flex flex-wrap gap-2">
+              {getUniqueCategories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => handleCategoryClick(cat)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    category === cat
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filters Section */}
@@ -251,7 +327,7 @@ export function TrendingProductsClient() {
 
       {/* Products Grid */}
       {filteredAndSortedProducts.length === 0 ? (
-        <div className="flex h-64 flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white">
+        <div className="flex h-64 flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white p-8">
           <svg
             className="h-12 w-12 text-gray-400"
             fill="none"
@@ -269,8 +345,27 @@ export function TrendingProductsClient() {
           <p className="mt-2 text-sm text-gray-600 text-center max-w-md">
             {searchQuery || category || maxPrice || minTrendingScore !== '10'
               ? 'Try adjusting your filters to see more products.'
-              : 'No trending products available at the moment. Check back later!'}
+              : 'No trending products available at the moment. Start collecting by visiting TikTok Shop!'}
           </p>
+          {(!searchQuery && !category && !maxPrice && minTrendingScore === '10') && (
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open('https://www.tiktok.com/shop', '_blank', 'noopener,noreferrer')}
+                className="flex items-center gap-2"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-.88-.05 6.33 6.33 0 0 0-5.23 2.84 6.05 6.05 0 0 0 .86 8.35 5.89 5.89 0 0 0 4.15 1.68 6.33 6.33 0 0 0 5.93-4.11 6.05 6.05 0 0 0 .29-1.85V7.44a4.85 4.85 0 0 0 3.78 4.28v-3.4a4.84 4.84 0 0 1-1-.63z"/>
+                </svg>
+                Visit TikTok Shop
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
         <>
@@ -317,9 +412,15 @@ export function TrendingProductsClient() {
                   )}
                   {/* Category Badge */}
                   {product.category && (
-                    <div className="absolute top-2 right-2 rounded-full bg-gray-900/70 px-2 py-1 text-xs font-medium text-white">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCategoryClick(product.category!);
+                      }}
+                      className="absolute top-2 right-2 rounded-full bg-gray-900/70 px-2 py-1 text-xs font-medium text-white hover:bg-gray-900 transition-colors cursor-pointer"
+                    >
                       {product.category}
-                    </div>
+                    </button>
                   )}
                 </div>
 

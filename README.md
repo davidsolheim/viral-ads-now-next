@@ -178,8 +178,9 @@ See `.env.example` for a complete list of required environment variables.
 
 ### Optional (for full functionality)
 - `WASABI_*`: Wasabi storage credentials
-- `OPENAI_API_KEY`: OpenAI API key
-- `REPLICATE_API_TOKEN`: Replicate API token
+- `TEXT_AI_API_KEY`: OpenAI API key for text generation
+- `IMAGE_AI_API_KEY`: Replicate API token for image generation
+- `VIDEO_AI_API_KEY`: Kling API key for video generation
 
 ## Contributing
 

@@ -219,7 +219,7 @@ export async function POST(
           metadata: {
             sceneId: scene.id,
             sceneNumber: scene.sceneNumber.toString(),
-            isPreview: false, // Mark as final image
+            isPreview: 'false', // Mark as final image
           },
         });
 

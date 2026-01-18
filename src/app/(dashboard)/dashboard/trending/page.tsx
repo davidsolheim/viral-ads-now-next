@@ -1,10 +1,10 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
-import { TrendingProductsClient } from '@/components/dashboard/trending-products-client';
+import { TrendingPageClient } from '@/components/dashboard/trending-page-client';
 import { needsOnboarding } from '@/lib/db-queries';
 
-export default async function TikTokTrendingPage() {
+export default async function TrendingPage() {
   const session = await auth();
 
   if (!session) {
@@ -24,7 +24,7 @@ export default async function TikTokTrendingPage() {
         userImage={session.user?.image || null}
         activeOrganizationId={session.user?.activeOrganizationId || null}
       />
-      <TrendingProductsClient />
+      <TrendingPageClient />
     </div>
   );
 }

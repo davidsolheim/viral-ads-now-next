@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 interface Organization {
@@ -112,6 +113,7 @@ export function useOrganization(organizationId: string | undefined) {
 
 export function useCreateOrganization() {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation({
     mutationFn: async (data: CreateOrganizationData) => {
@@ -128,9 +130,12 @@ export function useCreateOrganization() {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['organizations'] });
       toast.success('Organization created successfully!');
+
+      // Navigate to dashboard to ensure fresh session data is loaded
+      router.push('/dashboard');
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -195,6 +200,7 @@ export function useDeleteOrganization(organizationId: string) {
 
 export function useSwitchOrganization() {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation({
     mutationFn: async (organizationId: string) => {
@@ -216,7 +222,8 @@ export function useSwitchOrganization() {
       // Invalidate all queries that depend on active organization
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success('Switched organization!');
-      // The session will be updated on the next page load, so we don't need to reload
+      // Refresh server components to get updated session with new activeOrganizationId
+      router.refresh();
     },
     onError: (error: Error) => {
       toast.error(error.message);

@@ -1,5 +1,5 @@
 import { tiktokShopProducts } from '@/db/schema';
-import { eq, desc, sql, gte } from 'drizzle-orm';
+import { eq, desc, sql, gte, and } from 'drizzle-orm';
 
 // Lazy import to avoid database initialization during build
 let db: any = null;
@@ -27,6 +27,9 @@ export interface TrendingProduct {
   totalSales: number;
   engagementRate: string | null;
   trendingScore: string | null;
+  averageRating: string | null;
+  totalReviews: number;
+  ratingDistribution: Record<string, number> | null;
   lastUpdated: Date;
 }
 
@@ -38,7 +41,7 @@ export interface TrendingProduct {
  * - Sales volume (0.2 weight)
  * - Recency (0.1 weight)
  */
-function calculateTrendingScore(product: any): number {
+export function calculateTrendingScore(product: any): number {
   const engagementRate = parseFloat(product.engagementRate || '0');
   const views = product.totalViews || 0;
   const sales = product.totalSales || 0;
@@ -107,24 +110,25 @@ export async function getTrendingProducts(
 ): Promise<TrendingProduct[]> {
   const db = await getDb();
   
-  // Build query
-  let query = db
-    .select()
-    .from(tiktokShopProducts)
-    .where(
-      gte(
-        sql`CAST(${tiktokShopProducts.trendingScore} AS DECIMAL)`,
-        minTrendingScore.toString()
-      )
+  // Build conditions array
+  const conditions = [
+    gte(
+      sql`CAST(${tiktokShopProducts.trendingScore} AS DECIMAL)`,
+      minTrendingScore.toString()
     )
-    .orderBy(desc(tiktokShopProducts.trendingScore))
-    .limit(limit);
+  ];
   
   if (category) {
-    query = query.where(eq(tiktokShopProducts.category, category));
+    conditions.push(eq(tiktokShopProducts.category, category));
   }
   
-  const products = await query;
+  // Build query with combined conditions
+  const products = await db
+    .select()
+    .from(tiktokShopProducts)
+    .where(and(...conditions))
+    .orderBy(desc(tiktokShopProducts.trendingScore))
+    .limit(limit);
   
   return products.map((product: any) => ({
     id: product.id,
@@ -142,6 +146,9 @@ export async function getTrendingProducts(
     totalSales: product.totalSales || 0,
     engagementRate: product.engagementRate,
     trendingScore: product.trendingScore,
+    averageRating: product.averageRating,
+    totalReviews: product.totalReviews || 0,
+    ratingDistribution: product.ratingDistribution as Record<string, number> | null,
     lastUpdated: product.lastUpdated,
   }));
 }

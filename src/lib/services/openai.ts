@@ -3,6 +3,9 @@
  * Handles script generation using OpenAI's GPT models
  */
 
+import type { VideoPlatform } from '@/lib/constants/video-specs';
+import { getPlatformSpec, getRecommendedSpec, getPlatformName } from '@/lib/constants/video-specs';
+
 interface ProductData {
   name: string;
   description?: string;
@@ -27,8 +30,8 @@ export async function extractProductFromUrl(
   content: string,
   url: string
 ): Promise<ExtractedProduct> {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not configured');
+  if (!process.env.TEXT_AI_API_KEY) {
+    throw new Error('TEXT_AI_API_KEY is not configured');
   }
 
   const prompt = `Extract product data from the following webpage content. Return only valid JSON with this structure:
@@ -64,7 +67,7 @@ ${content}`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${process.env.TEXT_AI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'gpt-4o', // Updated to support JSON mode
@@ -196,17 +199,29 @@ interface ScriptGenerationOptions {
   product: ProductData;
   style?: AdStyle;
   duration?: number; // Target duration in seconds
-  platform?: 'tiktok' | 'instagram' | 'youtube';
+  platform?: VideoPlatform;
 }
 
 export async function generateScript(options: ScriptGenerationOptions): Promise<string> {
-  const { product, style = 'conversational', duration = 30, platform = 'tiktok' } = options;
+  const { product, style = 'conversational', platform = 'tiktok' } = options;
 
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not configured');
+  if (!process.env.TEXT_AI_API_KEY) {
+    throw new Error('TEXT_AI_API_KEY is not configured');
   }
 
-  const prompt = `You are an expert TikTok ad copywriter. Create a ${duration}-second video ad script for the following product.
+  // Get platform-specific duration recommendation if not provided
+  const platformSpec = getPlatformSpec(platform);
+  const recommendedSpec = getRecommendedSpec(platform);
+  const duration = options.duration || recommendedSpec.duration;
+  const platformName = getPlatformName(platform);
+
+  // Ensure duration is within platform limits
+  const clampedDuration = Math.max(
+    platformSpec.lengths.min,
+    Math.min(platformSpec.lengths.max, duration)
+  );
+
+  const prompt = `You are an expert ${platformName} ad copywriter. Create a ${clampedDuration}-second video ad script for the following product.
 
 Product Name: ${product.name}
 ${product.description ? `Description: ${product.description}` : ''}
@@ -236,7 +251,7 @@ Script:`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${process.env.TEXT_AI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'gpt-4o', // Updated for consistency
@@ -289,8 +304,8 @@ interface Scene {
 export async function breakdownIntoScenes(options: SceneBreakdownOptions): Promise<Scene[]> {
   const { script, targetScenes = 4 } = options;
 
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not configured');
+  if (!process.env.TEXT_AI_API_KEY) {
+    throw new Error('TEXT_AI_API_KEY is not configured');
   }
 
   const prompt = `Break down the following video ad script into ${targetScenes} visual scenes. For each scene, provide:
@@ -324,7 +339,7 @@ Make sure:
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${process.env.TEXT_AI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'gpt-4o', // Updated to support JSON mode
@@ -396,8 +411,8 @@ interface TikTokMetadata {
 export async function generateTikTokMetadata(options: TikTokMetadataOptions): Promise<TikTokMetadata> {
   const { productName, script } = options;
 
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not configured');
+  if (!process.env.TEXT_AI_API_KEY) {
+    throw new Error('TEXT_AI_API_KEY is not configured');
   }
 
   const prompt = `Generate TikTok post metadata for this video ad:
@@ -422,7 +437,7 @@ Return as JSON:
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${process.env.TEXT_AI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'gpt-4o', // Updated to support JSON mode
@@ -487,13 +502,25 @@ async function generateScriptWithTemperature(
   options: ScriptGenerationOptions,
   temperature: number
 ): Promise<string> {
-  const { product, style = 'conversational', duration = 30, platform = 'tiktok' } = options;
+  const { product, style = 'conversational', platform = 'tiktok' } = options;
 
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not configured');
+  if (!process.env.TEXT_AI_API_KEY) {
+    throw new Error('TEXT_AI_API_KEY is not configured');
   }
 
-  const prompt = `You are an expert TikTok ad copywriter. Create a ${duration}-second video ad script for the following product.
+  // Get platform-specific duration recommendation if not provided
+  const platformSpec = getPlatformSpec(platform);
+  const recommendedSpec = getRecommendedSpec(platform);
+  const duration = options.duration || recommendedSpec.duration;
+  const platformName = getPlatformName(platform);
+
+  // Ensure duration is within platform limits
+  const clampedDuration = Math.max(
+    platformSpec.lengths.min,
+    Math.min(platformSpec.lengths.max, duration)
+  );
+
+  const prompt = `You are an expert ${platformName} ad copywriter. Create a ${clampedDuration}-second video ad script for the following product.
 
 Product Name: ${product.name}
 ${product.description ? `Description: ${product.description}` : ''}
@@ -503,15 +530,21 @@ ${product.features && product.features.length > 0 ? `Features:\n${product.featur
 ${product.benefits && product.benefits.length > 0 ? `Benefits:\n${product.benefits.map(b => `- ${b}`).join('\n')}` : ''}
 
 Style: ${style}
-Platform: ${platform}
-Duration: ${duration} seconds
+Platform: ${platformName}
+Duration: ${clampedDuration} seconds
+
+Platform Requirements:
+- Minimum duration: ${platformSpec.lengths.min}s
+- Maximum duration: ${platformSpec.lengths.max}s
+- Recommended duration: ${platformSpec.lengths.recommended.join('s, ')}s
+${platformSpec.bestPractices.length > 0 ? `- Best practices: ${platformSpec.bestPractices.join('; ')}` : ''}
 
 Requirements:
 1. Write in a natural, ${style} tone that sounds authentic
 2. Hook viewers in the first 2 seconds
 3. Highlight the main benefit and create urgency
 4. Include a clear call-to-action
-5. Keep it concise - aim for ${Math.floor(duration * 2.5)} to ${Math.floor(duration * 3)} words total
+5. Keep it concise - aim for ${Math.floor(clampedDuration * 2.5)} to ${Math.floor(clampedDuration * 3)} words total
 6. Use short, punchy sentences
 7. Don't use hashtags or emojis in the script itself
 8. Write only the spoken words, no stage directions or descriptions
@@ -523,7 +556,7 @@ Script:`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${process.env.TEXT_AI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'gpt-4o',
@@ -576,8 +609,8 @@ export async function selectBestScript(
     return 0;
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not configured');
+  if (!process.env.TEXT_AI_API_KEY) {
+    throw new Error('TEXT_AI_API_KEY is not configured');
   }
 
   const candidatesText = candidates
@@ -612,7 +645,7 @@ The index should be 0-based (0 for first candidate, 1 for second, etc.)`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${process.env.TEXT_AI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'gpt-3.5-turbo', // Use cheaper model for selection
@@ -675,8 +708,8 @@ export async function selectBestImage(
     return 0;
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not configured');
+  if (!process.env.TEXT_AI_API_KEY) {
+    throw new Error('TEXT_AI_API_KEY is not configured');
   }
 
   const candidatesText = candidates
@@ -710,7 +743,7 @@ The index should be 0-based (0 for first candidate, 1 for second, etc.)`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${process.env.TEXT_AI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'gpt-3.5-turbo', // Use cheaper model for selection

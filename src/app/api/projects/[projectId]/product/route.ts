@@ -63,7 +63,10 @@ export async function GET(
     const product = await getProductByProject(projectId);
 
     if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      // If no product exists yet, return the project's productUrl if available
+      return NextResponse.json({ 
+        product: project.productUrl ? { url: project.productUrl } : null 
+      }, { status: 200 });
     }
 
     return NextResponse.json({ product }, { status: 200 });

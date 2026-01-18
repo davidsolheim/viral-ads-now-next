@@ -24,7 +24,10 @@ const collectProductSchema = z.object({
     totalViews: z.number().int().nonnegative().optional(),
     totalSales: z.number().int().nonnegative().optional(),
     engagementRate: z.string().optional(),
-    metadata: z.record(z.any()).optional(),
+    averageRating: z.union([z.string(), z.number()]).optional(),
+    totalReviews: z.number().int().nonnegative().optional(),
+    ratingDistribution: z.record(z.string(), z.number()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
   }),
 });
 
@@ -45,7 +48,7 @@ const collectVideoSchema = z.object({
     postedAt: z.string().datetime().optional(),
     description: z.string().optional(),
     hashtags: z.array(z.string()).optional(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
   }),
 });
 
@@ -67,7 +70,7 @@ const collectLiveStreamSchema = z.object({
     durationSeconds: z.number().int().nonnegative().optional(),
     title: z.string().optional(),
     description: z.string().optional(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
   }),
 });
 
@@ -88,7 +91,7 @@ const collectCreatorSchema = z.object({
     promotedProductCategories: z.array(z.string()).optional(),
     topProductIds: z.array(z.string()).optional(),
     bio: z.string().optional(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
   }),
 });
 
@@ -185,7 +188,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Validation error',
-          details: error.errors,
+          details: error.issues,
         },
         { status: 400 }
       );

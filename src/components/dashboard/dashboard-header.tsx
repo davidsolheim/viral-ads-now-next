@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { OrganizationSwitcher } from './organization-switcher';
 import { CreateOrganizationModal } from './create-organization-modal';
+import { ReferralLinkModal } from './referral-link-modal';
 import { Button } from '@/components/ui/button';
 
 interface DashboardHeaderProps {
@@ -24,12 +25,14 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState(false);
+  const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
   const pathname = usePathname();
 
   const navItems = [
     { href: '/dashboard', label: 'Projects' },
     { href: '/dashboard/library', label: 'Library' },
-    { href: '/dashboard/tiktok', label: 'Trending' },
+    { href: '/dashboard/trending', label: 'Trending' },
+    { href: '/dashboard/admin/rapidapi-seed', label: 'Admin' },
   ];
 
   const handleSignOut = async () => {
@@ -63,7 +66,7 @@ export function DashboardHeader({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <Link href="/dashboard" className="flex flex-shrink-0 items-center gap-2">
+            <Link href="/dashboard" className="flex flex-shrink-0 items-center gap-2 cursor-pointer">
               <Image
                 src="/viral-ads-now-icon.png"
                 alt="Viral Ads Now"
@@ -80,7 +83,7 @@ export function DashboardHeader({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`text-sm font-medium transition-colors ${
+                  className={`text-sm font-medium transition-colors cursor-pointer ${
                     isActive(item.href)
                       ? 'text-gray-900'
                       : 'text-gray-600 hover:text-gray-900'
@@ -95,7 +98,7 @@ export function DashboardHeader({
             <div className="relative">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-gray-100"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-gray-100 cursor-pointer"
               >
                 {userImage ? (
                   <Image
@@ -184,7 +187,7 @@ export function DashboardHeader({
                           setIsUserMenuOpen(false);
                           setIsCreateOrgModalOpen(true);
                         }}
-                        className="mt-2 w-full rounded-md px-3 py-2 text-left text-sm text-blue-600 hover:bg-blue-50"
+                        className="mt-2 w-full rounded-md px-3 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 cursor-pointer"
                       >
                         <div className="flex items-center gap-2">
                           <svg
@@ -210,7 +213,7 @@ export function DashboardHeader({
                       <Link
                         href="/settings/profile"
                         onClick={() => setIsUserMenuOpen(false)}
-                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 cursor-pointer"
                       >
                         <svg
                           className="h-5 w-5 text-gray-400"
@@ -227,10 +230,32 @@ export function DashboardHeader({
                         </svg>
                         Profile Settings
                       </Link>
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          setIsReferralModalOpen(true);
+                        }}
+                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 cursor-pointer"
+                      >
+                        <svg
+                          className="h-5 w-5 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                          />
+                        </svg>
+                        Referral Link
+                      </button>
                       <Link
                         href="/settings/organizations"
                         onClick={() => setIsUserMenuOpen(false)}
-                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 cursor-pointer"
                       >
                         <svg
                           className="h-5 w-5 text-gray-400"
@@ -255,7 +280,7 @@ export function DashboardHeader({
                       </Link>
                       <button
                         onClick={handleSignOut}
-                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 cursor-pointer"
                       >
                         <svg
                           className="h-5 w-5 text-gray-400"
@@ -284,6 +309,10 @@ export function DashboardHeader({
       <CreateOrganizationModal
         isOpen={isCreateOrgModalOpen}
         onClose={() => setIsCreateOrgModalOpen(false)}
+      />
+      <ReferralLinkModal
+        isOpen={isReferralModalOpen}
+        onClose={() => setIsReferralModalOpen(false)}
       />
     </>
   );

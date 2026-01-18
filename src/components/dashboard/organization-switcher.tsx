@@ -61,7 +61,7 @@ export function OrganizationSwitcher({
             <button
               key={org.organization.id}
               onClick={() => handleSwitch(org.organization.id)}
-              className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
+              className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors cursor-pointer ${
                 org.organization.id === activeOrganizationId
                   ? 'bg-blue-50 text-blue-700'
                   : 'text-gray-700 hover:bg-gray-50'
@@ -134,7 +134,7 @@ export function OrganizationSwitcher({
                       <button
                         key={org.organization.id}
                         onClick={() => handleSwitch(org.organization.id)}
-                        className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                        className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors cursor-pointer ${
                           org.organization.id === activeOrganizationId
                             ? 'bg-blue-50 text-blue-700'
                             : 'text-gray-700 hover:bg-gray-50'
@@ -172,7 +172,7 @@ export function OrganizationSwitcher({
                       setIsOpen(false);
                       setIsCreateModalOpen(true);
                     }}
-                    className="w-full rounded-md px-3 py-2 text-left text-sm text-blue-600 hover:bg-blue-50"
+                    className="w-full rounded-md px-3 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

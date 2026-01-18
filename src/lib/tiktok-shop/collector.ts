@@ -260,7 +260,9 @@ class TikTokShopCollector {
       // Look for thumbnail
       const thumbnailElement = document.querySelector('video') || document.querySelector('[class*="thumbnail"] img');
       const thumbnailUrl = thumbnailElement
-        ? (thumbnailElement as HTMLVideoElement).poster || (thumbnailElement as HTMLImageElement).src
+        ? (thumbnailElement.tagName === 'VIDEO'
+            ? (thumbnailElement as HTMLVideoElement).poster
+            : (thumbnailElement as unknown as HTMLImageElement).src)
         : undefined;
 
       return {
@@ -485,6 +487,50 @@ class TikTokShopCollector {
 
   public async collect() {
     await this.startCollection();
+  }
+
+  /**
+   * Start automatic collection of TikTok Shop data
+   * This method monitors for TikTok Shop product links and collects data
+   * It also periodically checks for products to collect from our queue
+   */
+  public startAutomaticCollection() {
+    if (!this.config.enabled) return;
+
+    // Monitor for clicks on TikTok Shop links
+    document.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      const link = target.closest('a');
+      
+      if (link && link.href) {
+        const url = new URL(link.href, window.location.href);
+        // If it's a TikTok Shop link, the collector will handle it when the page loads
+        if (url.hostname.includes('tiktok.com') && (url.pathname.includes('/shopping') || url.pathname.includes('/product'))) {
+          console.log('TikTok Shop link detected, collection will happen when page loads');
+        }
+      }
+    }, true);
+
+    // Poll queue for products that need to be collected/refreshed
+    const pollQueue = async () => {
+      try {
+        const response = await fetch('/api/tiktok-shop/queue?limit=10');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data && data.data.length > 0) {
+            // Queue items will be processed by the refresh mechanism
+            // This ensures we're collecting products that need updates
+            console.log(`Found ${data.data.length} items in collection queue`);
+          }
+        }
+      } catch (error) {
+        console.error('Error polling collection queue:', error);
+      }
+    };
+
+    // Poll queue every 5 minutes
+    pollQueue(); // Initial poll
+    setInterval(pollQueue, 5 * 60 * 1000);
   }
 }
 

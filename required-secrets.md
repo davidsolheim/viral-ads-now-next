@@ -15,8 +15,9 @@ RESEND_API_KEY='your_resend_api_key'
 RESEND_FROM_EMAIL='your-email@example.com'
 
 # AI Services
-OPENAI_API_KEY='your_openai_api_key'
-REPLICATE_API_TOKEN='your_replicate_token'
+TEXT_AI_API_KEY='your_openai_api_key'
+IMAGE_AI_API_KEY='your_replicate_token'
+VIDEO_AI_API_KEY='your_kling_api_key'  # For Kling video generation
 REPLICATE_IMAGE_MODEL_VERSION=your_version_id_here
 
 # Storage
@@ -34,3 +35,9 @@ STRIPE_SECRET_KEY='your_stripe_secret_key'
 STRIPE_PUBLISHABLE_KEY='your_stripe_publishable_key'
 STRIPE_WEBHOOK_SECRET='your_stripe_webhook_secret'
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY='your_stripe_publishable_key'
+
+# RapidAPI
+RAPID_API_KEY='your_rapidapi_key_here'
+
+# Super Admin (comma-separated emails for admin access)
+SUPER_ADMIN_EMAILS='admin@example.com,superadmin@example.com'

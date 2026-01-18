@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { completeOnboarding } from '@/lib/db-queries';
+import { completeOnboarding, getReferralByCode, createReferralRecord } from '@/lib/db-queries';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 
 const completeOnboardingSchema = z.object({
@@ -24,6 +25,32 @@ export async function POST(request: NextRequest) {
       data.name,
       data.organizationName
     );
+
+    // Check for referral code in cookies
+    const cookieStore = await cookies();
+    const referralCode = cookieStore.get('referral_code')?.value;
+
+    if (referralCode) {
+      try {
+        // Get referral by code
+        const referral = await getReferralByCode(referralCode.toUpperCase());
+        
+        if (referral && referral.referrerId !== session.user.id) {
+          // Create referral record linking the new user to the referrer
+          await createReferralRecord({
+            referrerId: referral.referrerId,
+            referredUserId: session.user.id,
+            referralCode: referral.referralCode,
+          });
+
+          // Clear the referral cookie
+          cookieStore.delete('referral_code');
+        }
+      } catch (error) {
+        // Log error but don't fail onboarding
+        console.error('Error processing referral during onboarding:', error);
+      }
+    }
 
     return NextResponse.json({
       success: true,

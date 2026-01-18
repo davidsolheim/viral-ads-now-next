@@ -1,21 +1,64 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useProjects, useCreateProject } from '@/hooks/use-projects';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Loading } from '@/components/ui/loading';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 
 interface DashboardClientProps {
   userId: string;
   organizationId?: string;
 }
 
+// Helper function to generate project name from URL
+function generateProjectNameFromUrl(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    // Extract the last meaningful part of the path
+    const pathParts = urlObj.pathname.split('/').filter(Boolean);
+    const lastPart = pathParts[pathParts.length - 1] || urlObj.hostname;
+    
+    // Clean up the name: replace dashes/underscores with spaces, remove file extensions
+    let name = lastPart
+      .replace(/[-_]/g, ' ')
+      .replace(/\.(html|htm|php|aspx|jsp)/i, '')
+      .trim();
+    
+    // Capitalize first letter of each word
+    name = name
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+    
+    // If name is too short or generic, use hostname
+    if (name.length < 3 || name.toLowerCase() === 'product' || name.toLowerCase() === 'item') {
+      name = urlObj.hostname.replace('www.', '').split('.')[0];
+      name = name.charAt(0).toUpperCase() + name.slice(1);
+    }
+    
+    return name || 'New Project';
+  } catch {
+    // If URL parsing fails, try to extract from string
+    const parts = url.split('/').filter(Boolean);
+    const lastPart = parts[parts.length - 1] || 'Product';
+    return lastPart
+      .replace(/[-_]/g, ' ')
+      .replace(/\.(html|htm|php|aspx|jsp)/i, '')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ') || 'New Project';
+  }
+}
+
 export function DashboardClient({ userId, organizationId }: DashboardClientProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [projectName, setProjectName] = useState('');
+  const [productUrl, setProductUrl] = useState('');
+  const router = useRouter();
 
   // Use provided organizationId or fall back to default
   const activeOrganizationId = organizationId || 'default-org';
@@ -25,15 +68,37 @@ export function DashboardClient({ userId, organizationId }: DashboardClientProps
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!projectName.trim() || !activeOrganizationId) return;
+    if (!productUrl.trim() || !activeOrganizationId) return;
 
-    await createProject.mutateAsync({
-      name: projectName,
-      organizationId: activeOrganizationId,
-    });
+    // Validate URL format
+    try {
+      new URL(productUrl);
+    } catch {
+      toast.error('Please enter a valid URL');
+      return;
+    }
 
-    setProjectName('');
-    setIsCreateModalOpen(false);
+    // Generate project name from URL
+    const projectName = generateProjectNameFromUrl(productUrl);
+
+    try {
+      const result = await createProject.mutateAsync({
+        name: projectName,
+        organizationId: activeOrganizationId,
+        productUrl: productUrl,
+      });
+
+      setProductUrl('');
+      setIsCreateModalOpen(false);
+      
+      // Navigate to the project page
+      if (result?.project?.id) {
+        router.push(`/projects/${result.project.id}`);
+      }
+    } catch (error) {
+      // Error is already handled by the mutation's onError callback
+      console.error('Failed to create project:', error);
+    }
   };
 
   return (
@@ -143,19 +208,28 @@ export function DashboardClient({ userId, organizationId }: DashboardClientProps
         title="Create New Project"
       >
         <form onSubmit={handleCreateProject} className="space-y-4">
-          <Input
-            label="Project Name"
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            placeholder="My Awesome Product Ad"
-            required
-            autoFocus
-          />
+          <div>
+            <Input
+              label="Product URL"
+              type="url"
+              value={productUrl}
+              onChange={(e) => setProductUrl(e.target.value)}
+              placeholder="https://example.com/products/your-item"
+              required
+              autoFocus
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              Paste the URL of the product you want to create an ad for. We'll automatically name your project.
+            </p>
+          </div>
           <div className="flex justify-end gap-3">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsCreateModalOpen(false)}
+              onClick={() => {
+                setIsCreateModalOpen(false);
+                setProductUrl('');
+              }}
             >
               Cancel
             </Button>

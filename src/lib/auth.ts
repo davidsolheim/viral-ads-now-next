@@ -33,18 +33,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     verifyRequest: '/auth/verify',
   },
   callbacks: {
-    async session({ session, user }) {
+    async session({ session, token, user }) {
       if (session.user) {
-        session.user.id = user.id;
-        // Add active organization to session if available
-        const userWithOrg = await db.query.users.findFirst({
-          where: (users, { eq }) => eq(users.id, user.id),
-          columns: {
-            activeOrganizationId: true,
-          },
-        });
-        if (userWithOrg?.activeOrganizationId) {
-          session.user.activeOrganizationId = userWithOrg.activeOrganizationId;
+        // Get user ID from token or user parameter
+        const userId = token?.sub || user?.id;
+        if (userId) {
+          session.user.id = userId;
+          // Add active organization to session if available
+          const userWithOrg = await db.query.users.findFirst({
+            where: (users, { eq }) => eq(users.id, userId),
+            columns: {
+              activeOrganizationId: true,
+            },
+          });
+          if (userWithOrg?.activeOrganizationId) {
+            session.user.activeOrganizationId = userWithOrg.activeOrganizationId;
+          }
         }
       }
       return session;

@@ -2,12 +2,25 @@ import { signIn } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
 
+import { cookies } from 'next/headers';
+
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string }>;
+  searchParams: Promise<{ callbackUrl?: string; ref?: string }>;
 }) {
-  const { callbackUrl } = await searchParams;
+  const { callbackUrl, ref } = await searchParams;
+  
+  // Store referral code in cookie if present
+  if (ref) {
+    const cookieStore = await cookies();
+    cookieStore.set('referral_code', ref, {
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+    });
+  }
 
   async function handleGoogleSignIn() {
     'use server';

@@ -27,7 +27,7 @@ export function getClientFingerprint(request: NextRequest): string {
   // Get IP address (check various headers for proxy/load balancer scenarios)
   const forwarded = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
-  const ip = forwarded?.split(',')[0]?.trim() || realIp || request.ip || 'unknown';
+  const ip = forwarded?.split(',')[0]?.trim() || realIp || 'unknown';
 
   // Get User-Agent
   const userAgent = request.headers.get('user-agent') || 'unknown';

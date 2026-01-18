@@ -29,8 +29,8 @@ export async function generateVoiceover(options: VoiceoverOptions): Promise<stri
     emotion = 'neutral',
   } = options;
 
-  if (!process.env.REPLICATE_API_TOKEN) {
-    throw new Error('REPLICATE_API_TOKEN is not configured');
+  if (!process.env.IMAGE_AI_API_KEY) {
+    throw new Error('IMAGE_AI_API_KEY is not configured');
   }
 
   try {
@@ -39,7 +39,7 @@ export async function generateVoiceover(options: VoiceoverOptions): Promise<stri
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+        'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
       },
       body: JSON.stringify({
         version: 'minimax/text-to-speech:latest', // Update with actual version
@@ -81,7 +81,7 @@ export async function generateVoiceover(options: VoiceoverOptions): Promise<stri
 
       const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
         headers: {
-          'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+          'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
         },
       });
 
@@ -128,8 +128,8 @@ export async function generateImage(options: ImageGenerationOptions): Promise<st
     style = 'photorealistic',
   } = options;
 
-  if (!process.env.REPLICATE_API_TOKEN) {
-    throw new Error('REPLICATE_API_TOKEN is not configured');
+  if (!process.env.IMAGE_AI_API_KEY) {
+    throw new Error('IMAGE_AI_API_KEY is not configured');
   }
 
   // Enhance prompt based on style
@@ -153,7 +153,7 @@ export async function generateImage(options: ImageGenerationOptions): Promise<st
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+        'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
       },
       body: JSON.stringify({
         version: modelVersion,
@@ -193,7 +193,7 @@ export async function generateImage(options: ImageGenerationOptions): Promise<st
 
       const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
         headers: {
-          'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+          'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
         },
       });
 
@@ -239,8 +239,8 @@ export async function generateImageCandidates(
     style = 'photorealistic',
   } = options;
 
-  if (!process.env.REPLICATE_API_TOKEN) {
-    throw new Error('REPLICATE_API_TOKEN is not configured');
+  if (!process.env.IMAGE_AI_API_KEY) {
+    throw new Error('IMAGE_AI_API_KEY is not configured');
   }
 
   // Enhance prompt based on style
@@ -264,7 +264,7 @@ export async function generateImageCandidates(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+        'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
       },
       body: JSON.stringify({
         version: modelVersion,
@@ -304,7 +304,7 @@ export async function generateImageCandidates(
 
       const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
         headers: {
-          'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+          'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
         },
       });
 

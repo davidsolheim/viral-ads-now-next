@@ -5,12 +5,14 @@
 
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import type { VideoPlatform } from '@/lib/constants/video-specs';
+import { convertSpecToFFmpegOptions } from '@/lib/constants/video-specs';
 
 export interface VideoClip {
   type: 'image' | 'video';
   url: string;
   duration: number;
-  transition?: 'fade' | 'zoom' | 'slide';
+  transition?: 'fade' | 'zoom' | 'zoom-in' | 'zoom-out' | 'slide';
 }
 
 export interface Caption {
@@ -35,6 +37,7 @@ export interface VideoCompilationOptions {
   resolution?: '480p' | '720p' | '1080p' | '4k';
   aspectRatio?: 'portrait' | 'landscape' | 'square';
   format?: 'mp4' | 'mov';
+  platform?: VideoPlatform; // Optional platform to auto-configure defaults
 }
 
 // Resolution mapping (landscape defaults)
@@ -127,7 +130,7 @@ async function imageToVideoClip(
   duration: number,
   outputName: string,
   resolution: { width: number; height: number },
-  transition?: 'fade' | 'zoom' | 'slide'
+  transition?: 'fade' | 'zoom' | 'zoom-in' | 'zoom-out' | 'slide'
 ): Promise<string> {
   // Fetch and write image to FFmpeg filesystem
   const imageData = await fetchFileAsUint8Array(imageUrl);
@@ -214,6 +217,18 @@ function getCaptionPosition(
 export async function compileVideo(
   options: VideoCompilationOptions
 ): Promise<Blob> {
+  // Get platform-specific defaults if platform is provided
+  let defaultResolution: '480p' | '720p' | '1080p' | '4k' = '1080p';
+  let defaultAspectRatio: 'portrait' | 'landscape' | 'square' = 'landscape';
+  let defaultFormat: 'mp4' | 'mov' = 'mp4';
+
+  if (options.platform) {
+    const platformDefaults = convertSpecToFFmpegOptions(options.platform);
+    defaultResolution = platformDefaults.resolution;
+    defaultAspectRatio = platformDefaults.aspectRatio;
+    defaultFormat = platformDefaults.format;
+  }
+
   const {
     clips,
     voiceoverUrl,
@@ -221,9 +236,9 @@ export async function compileVideo(
     musicVolume = 0.3,
     captions = [],
     captionStyle = {},
-    resolution = '1080p',
-    aspectRatio = 'landscape',
-    format = 'mp4',
+    resolution = defaultResolution,
+    aspectRatio = defaultAspectRatio,
+    format = defaultFormat,
   } = options;
 
   if (clips.length === 0) {
@@ -375,7 +390,7 @@ export async function compileVideo(
     const outputData = await ffmpeg.readFile(finalOutput);
     await ffmpeg.deleteFile(finalOutput);
 
-    return new Blob([outputData], { type: `video/${outputFormat}` });
+    return new Blob([outputData as BlobPart], { type: `video/${outputFormat}` });
   } catch (error) {
     console.error('Error compiling video:', error);
     throw error;
@@ -473,7 +488,7 @@ export async function animateImage(options: {
     await ffmpeg.deleteFile('input_image.jpg');
     await ffmpeg.deleteFile('output.mp4');
 
-    return new Blob([outputData], { type: 'video/mp4' });
+    return new Blob([outputData as BlobPart], { type: 'video/mp4' });
   } catch (error) {
     console.error('Error animating image:', error);
     throw error;

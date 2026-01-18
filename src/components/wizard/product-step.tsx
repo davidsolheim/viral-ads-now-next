@@ -68,17 +68,20 @@ export function ProductStep({ projectId, onNext }: ProductStepProps) {
           const existingProduct = data.product;
 
           if (existingProduct) {
-            // Convert database product to form state
+            // If product exists, convert database product to form state
+            if (existingProduct.name) {
+              setProduct({
+                name: existingProduct.name || '',
+                description: existingProduct.description || '',
+                price: existingProduct.price ? String(existingProduct.price) : '',
+                originalPrice: existingProduct.originalPrice ? String(existingProduct.originalPrice) : '',
+                featuresText: toTextBlock(existingProduct.features),
+                benefitsText: toTextBlock(existingProduct.benefits),
+                images: existingProduct.images || [],
+              });
+            }
+            // Set URL from product or project (if product doesn't exist yet but project has productUrl)
             setUrl(existingProduct.url || '');
-            setProduct({
-              name: existingProduct.name || '',
-              description: existingProduct.description || '',
-              price: existingProduct.price ? String(existingProduct.price) : '',
-              originalPrice: existingProduct.originalPrice ? String(existingProduct.originalPrice) : '',
-              featuresText: toTextBlock(existingProduct.features),
-              benefitsText: toTextBlock(existingProduct.benefits),
-              images: existingProduct.images || [],
-            });
           }
         }
       } catch (error) {

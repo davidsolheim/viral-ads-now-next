@@ -5,6 +5,8 @@ import {
   createOrUpdateInvoice,
   createCreditTransaction,
   getCreditBalance,
+  processReferralReward,
+  getUserOrganizations,
 } from '@/lib/db-queries';
 import Stripe from 'stripe';
 
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
             { expand: ['default_payment_method'] }
           );
 
-          await handleSubscriptionCreated(subscription, session.metadata);
+          await handleSubscriptionCreated(subscription, session.metadata || undefined);
         }
         
         break;
@@ -122,8 +124,8 @@ async function handleSubscriptionCreated(
   subscription: Stripe.Subscription,
   metadata?: Record<string, string>
 ) {
-  const organizationId = metadata?.organizationId;
-  const planId = metadata?.planId;
+  const organizationId = metadata?.organizationId || subscription.metadata?.organizationId;
+  const planId = metadata?.planId || subscription.metadata?.planId;
 
   if (!organizationId || !planId) {
     console.error('Missing organizationId or planId in subscription metadata');
@@ -152,11 +154,25 @@ async function handleSubscriptionCreated(
     stripeSubscriptionId: subscription.id,
     stripeCustomerId: customerId,
     status,
-    currentPeriodStart: new Date(subscription.current_period_start * 1000),
-    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-    cancelAtPeriodEnd: subscription.cancel_at_period_end,
-    canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : undefined,
-    trialEndsAt: subscription.trial_end ? new Date(subscription.trial_end * 1000) : undefined,
+    currentPeriodStart:
+      (subscription as any).current_period_start &&
+      typeof (subscription as any).current_period_start === 'number'
+        ? new Date((subscription as any).current_period_start * 1000)
+        : undefined,
+    currentPeriodEnd:
+      (subscription as any).current_period_end &&
+      typeof (subscription as any).current_period_end === 'number'
+        ? new Date((subscription as any).current_period_end * 1000)
+        : undefined,
+    cancelAtPeriodEnd: (subscription as any).cancel_at_period_end ?? false,
+    canceledAt:
+      (subscription as any).canceled_at && typeof (subscription as any).canceled_at === 'number'
+        ? new Date((subscription as any).canceled_at * 1000)
+        : undefined,
+    trialEndsAt:
+      (subscription as any).trial_end && typeof (subscription as any).trial_end === 'number'
+        ? new Date((subscription as any).trial_end * 1000)
+        : undefined,
   });
 }
 
@@ -179,18 +195,30 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     stripeSubscriptionId: subscription.id,
     stripeCustomerId: customerId,
     status: 'canceled',
-    currentPeriodStart: new Date(subscription.current_period_start * 1000),
-    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+    currentPeriodStart:
+      (subscription as any).current_period_start &&
+      typeof (subscription as any).current_period_start === 'number'
+        ? new Date((subscription as any).current_period_start * 1000)
+        : undefined,
+    currentPeriodEnd:
+      (subscription as any).current_period_end &&
+      typeof (subscription as any).current_period_end === 'number'
+        ? new Date((subscription as any).current_period_end * 1000)
+        : undefined,
     cancelAtPeriodEnd: false,
     canceledAt: new Date(),
-    trialEndsAt: subscription.trial_end ? new Date(subscription.trial_end * 1000) : undefined,
+    trialEndsAt:
+      (subscription as any).trial_end && typeof (subscription as any).trial_end === 'number'
+        ? new Date((subscription as any).trial_end * 1000)
+        : undefined,
   });
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   const organizationId = invoice.metadata?.organizationId;
-  const subscriptionId = invoice.subscription 
-    ? (typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription.id)
+  const invoiceAny = invoice as any;
+  const subscriptionId = invoiceAny.subscription 
+    ? (typeof invoiceAny.subscription === 'string' ? invoiceAny.subscription : invoiceAny.subscription.id)
     : undefined;
 
   if (!organizationId) {
@@ -205,41 +233,116 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     stripeInvoiceId: invoice.id,
     number: invoice.number || undefined,
     status: 'paid',
-    amountDue: (invoice.amount_due / 100).toString(),
-    amountPaid: (invoice.amount_paid / 100).toString(),
+    amountDue: invoiceAny.amount_due ? (invoiceAny.amount_due / 100).toString() : '0',
+    amountPaid: invoiceAny.amount_paid ? (invoiceAny.amount_paid / 100).toString() : '0',
     currency: invoice.currency,
-    periodStart: invoice.period_start ? new Date(invoice.period_start * 1000) : undefined,
-    periodEnd: invoice.period_end ? new Date(invoice.period_end * 1000) : undefined,
-    dueDate: invoice.due_date ? new Date(invoice.due_date * 1000) : undefined,
+    periodStart: invoiceAny.period_start && typeof invoiceAny.period_start === 'number'
+      ? new Date(invoiceAny.period_start * 1000)
+      : undefined,
+    periodEnd: invoiceAny.period_end && typeof invoiceAny.period_end === 'number'
+      ? new Date(invoiceAny.period_end * 1000)
+      : undefined,
+    dueDate: invoiceAny.due_date && typeof invoiceAny.due_date === 'number'
+      ? new Date(invoiceAny.due_date * 1000)
+      : undefined,
     paidAt: new Date(),
-    hostedInvoiceUrl: invoice.hosted_invoice_url || undefined,
-    invoicePdf: invoice.invoice_pdf || undefined,
+    hostedInvoiceUrl: invoiceAny.hosted_invoice_url || undefined,
+    invoicePdf: invoiceAny.invoice_pdf || undefined,
     lineItems: invoice.lines?.data || undefined,
   });
 
   // If this is a credit purchase (check metadata or line items)
   if (invoice.metadata?.type === 'credit_purchase') {
-    const amount = invoice.amount_paid / 100; // Convert from cents to dollars
+    const amount = invoiceAny.amount_paid ? invoiceAny.amount_paid / 100 : 0; // Convert from cents to dollars
     
-    // Calculate credits: $4 per video credit
-    const creditsAmount = amount / 4;
+    // Calculate credits: $0.01 per credit (1 penny = 1 credit)
+    const creditsAmount = amount * 100;
 
     await createCreditTransaction({
       organizationId,
       type: 'purchase',
       amount: creditsAmount.toString(),
       description: `Credit purchase via invoice ${invoice.number}`,
-      stripePaymentIntentId: typeof invoice.payment_intent === 'string' 
-        ? invoice.payment_intent 
-        : invoice.payment_intent?.id,
+      stripePaymentIntentId: invoiceAny.payment_intent
+        ? (typeof invoiceAny.payment_intent === 'string' 
+          ? invoiceAny.payment_intent 
+          : invoiceAny.payment_intent?.id)
+        : undefined,
     });
+
+    // Process referral reward (20% of purchase)
+    try {
+      const { db } = await import('@/db');
+      const { organizations } = await import('@/db/schema');
+      const { eq } = await import('drizzle-orm');
+
+      // Get organization owner/user ID
+      const [org] = await db
+        .select({ ownerId: organizations.ownerId })
+        .from(organizations)
+        .where(eq(organizations.id, organizationId))
+        .limit(1);
+
+      if (org?.ownerId) {
+        await processReferralReward(
+          org.ownerId,
+          amount,
+          organizationId,
+          `Referral reward from credit purchase of $${amount.toFixed(2)}`,
+          false // Not a subscription payment
+        );
+      }
+    } catch (error) {
+      // Log but don't fail the webhook
+      console.error('Error processing referral reward:', error);
+    }
+  }
+
+  // Process referral reward for subscription invoices (ongoing - every payment)
+  if (subscriptionId && !invoice.metadata?.type) {
+    try {
+      const { db } = await import('@/db');
+      const { organizations, subscriptions } = await import('@/db/schema');
+      const { eq } = await import('drizzle-orm');
+
+      // Get subscription to find organization
+      const [sub] = await db
+        .select({ organizationId: subscriptions.organizationId })
+        .from(subscriptions)
+        .where(eq(subscriptions.stripeSubscriptionId, subscriptionId))
+        .limit(1);
+
+      if (sub?.organizationId) {
+        // Get organization owner/user ID
+        const [org] = await db
+          .select({ ownerId: organizations.ownerId })
+          .from(organizations)
+          .where(eq(organizations.id, sub.organizationId))
+          .limit(1);
+
+        if (org?.ownerId) {
+          const amount = invoiceAny.amount_paid ? invoiceAny.amount_paid / 100 : 0;
+          await processReferralReward(
+            org.ownerId,
+            amount,
+            sub.organizationId,
+            `Referral reward from subscription invoice of $${amount.toFixed(2)}`,
+            true // Mark as subscription payment
+          );
+        }
+      }
+    } catch (error) {
+      // Log but don't fail the webhook
+      console.error('Error processing referral reward for subscription invoice:', error);
+    }
   }
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const organizationId = invoice.metadata?.organizationId;
-  const subscriptionId = invoice.subscription 
-    ? (typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription.id)
+  const invoiceAny = invoice as any;
+  const subscriptionId = invoiceAny.subscription 
+    ? (typeof invoiceAny.subscription === 'string' ? invoiceAny.subscription : invoiceAny.subscription.id)
     : undefined;
 
   if (!organizationId) {
@@ -253,14 +356,20 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     stripeInvoiceId: invoice.id,
     number: invoice.number || undefined,
     status: 'open', // Keep as open for retry
-    amountDue: (invoice.amount_due / 100).toString(),
-    amountPaid: (invoice.amount_paid / 100).toString(),
+    amountDue: invoiceAny.amount_due ? (invoiceAny.amount_due / 100).toString() : '0',
+    amountPaid: invoiceAny.amount_paid ? (invoiceAny.amount_paid / 100).toString() : '0',
     currency: invoice.currency,
-    periodStart: invoice.period_start ? new Date(invoice.period_start * 1000) : undefined,
-    periodEnd: invoice.period_end ? new Date(invoice.period_end * 1000) : undefined,
-    dueDate: invoice.due_date ? new Date(invoice.due_date * 1000) : undefined,
-    hostedInvoiceUrl: invoice.hosted_invoice_url || undefined,
-    invoicePdf: invoice.invoice_pdf || undefined,
+    periodStart: invoiceAny.period_start && typeof invoiceAny.period_start === 'number'
+      ? new Date(invoiceAny.period_start * 1000)
+      : undefined,
+    periodEnd: invoiceAny.period_end && typeof invoiceAny.period_end === 'number'
+      ? new Date(invoiceAny.period_end * 1000)
+      : undefined,
+    dueDate: invoiceAny.due_date && typeof invoiceAny.due_date === 'number'
+      ? new Date(invoiceAny.due_date * 1000)
+      : undefined,
+    hostedInvoiceUrl: invoiceAny.hosted_invoice_url || undefined,
+    invoicePdf: invoiceAny.invoice_pdf || undefined,
     lineItems: invoice.lines?.data || undefined,
   });
 }
@@ -277,8 +386,8 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
   if (paymentIntent.metadata?.type === 'credit_purchase') {
     const amount = paymentIntent.amount / 100; // Convert from cents to dollars
     
-    // Calculate credits: $4 per video credit
-    const creditsAmount = amount / 4;
+    // Calculate credits: $0.01 per credit (1 penny = 1 credit)
+    const creditsAmount = amount * 100;
 
     await createCreditTransaction({
       organizationId,
@@ -287,5 +396,32 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
       description: `Credit purchase via payment ${paymentIntent.id}`,
       stripePaymentIntentId: paymentIntent.id,
     });
+
+    // Process referral reward (20% of purchase)
+    try {
+      const { db } = await import('@/db');
+      const { organizations } = await import('@/db/schema');
+      const { eq } = await import('drizzle-orm');
+
+      // Get organization owner/user ID
+      const [org] = await db
+        .select({ ownerId: organizations.ownerId })
+        .from(organizations)
+        .where(eq(organizations.id, organizationId))
+        .limit(1);
+
+      if (org?.ownerId) {
+        await processReferralReward(
+          org.ownerId,
+          amount,
+          organizationId,
+          `Referral reward from credit purchase of $${amount.toFixed(2)}`,
+          false // Not a subscription payment
+        );
+      }
+    } catch (error) {
+      // Log but don't fail the webhook
+      console.error('Error processing referral reward:', error);
+    }
   }
 }

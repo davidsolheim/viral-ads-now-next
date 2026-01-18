@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import { compileVideo, type VideoCompilationOptions } from '@/lib/services/ffmpeg-client';
 import { Button } from '@/components/ui/button';
 import { Loading } from '@/components/ui/loading';
+import type { VideoPlatform } from '@/lib/constants/video-specs';
+import {
+  getSupportedPlatforms,
+  getPlatformName,
+  getRecommendedSpec,
+  convertSpecToFFmpegOptions,
+} from '@/lib/constants/video-specs';
 import toast from 'react-hot-toast';
 
 interface CompileStepProps {
@@ -13,6 +20,7 @@ interface CompileStepProps {
 
 export function CompileStep({ projectId, onNext }: CompileStepProps) {
   const [video, setVideo] = useState<{ url: string } | null>(null);
+  const [platform, setPlatform] = useState<VideoPlatform>('tiktok');
   const [resolution, setResolution] = useState<'480p' | '720p' | '1080p' | '4k'>('1080p');
   const [aspectRatio, setAspectRatio] = useState<'portrait' | 'landscape' | 'square'>('portrait');
   const [duration, setDuration] = useState(30);
@@ -20,6 +28,16 @@ export function CompileStep({ projectId, onNext }: CompileStepProps) {
   const [isCompiling, setIsCompiling] = useState(false);
   const [progress, setProgress] = useState<string>('');
   const [isLoadingAssets, setIsLoadingAssets] = useState(false);
+
+  // Update settings when platform changes
+  useEffect(() => {
+    const platformDefaults = convertSpecToFFmpegOptions(platform);
+    const recommendedSpec = getRecommendedSpec(platform);
+    
+    setResolution(platformDefaults.resolution);
+    setAspectRatio(platformDefaults.aspectRatio);
+    setDuration(recommendedSpec.duration);
+  }, [platform]);
 
   // Load project settings on mount
   useEffect(() => {
@@ -130,6 +148,7 @@ export function CompileStep({ projectId, onNext }: CompileStepProps) {
         resolution,
         aspectRatio,
         format: 'mp4',
+        platform, // Include platform for validation and best practices
       };
 
       const videoBlob = await compileVideo(compilationOptions);
@@ -144,7 +163,7 @@ export function CompileStep({ projectId, onNext }: CompileStepProps) {
           resolution,
           includeCaptions,
           musicVolume: 0.3,
-          durationSeconds: clips.reduce((sum, clip) => sum + clip.duration, 0),
+          durationSeconds: clips.reduce((sum: number, clip: { duration: number }) => sum + clip.duration, 0),
         })
       );
 
@@ -172,6 +191,8 @@ export function CompileStep({ projectId, onNext }: CompileStepProps) {
     }
   };
 
+  const supportedPlatforms = getSupportedPlatforms();
+
   return (
     <div>
       <h2 className="text-2xl font-bold text-gray-900">Compile Video</h2>
@@ -180,6 +201,27 @@ export function CompileStep({ projectId, onNext }: CompileStepProps) {
       </p>
 
       <div className="mt-6 space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-900 mb-2">
+            Platform
+          </label>
+          <select
+            value={platform}
+            onChange={(e) => setPlatform(e.target.value as VideoPlatform)}
+            disabled={isCompiling}
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {supportedPlatforms.map((p) => (
+              <option key={p} value={p}>
+                {getPlatformName(p)}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-gray-500">
+            Settings will auto-update based on platform requirements
+          </p>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-900 mb-2">
             Aspect Ratio

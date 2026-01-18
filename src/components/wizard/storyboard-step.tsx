@@ -194,7 +194,7 @@ export function StoryboardStep({ projectId, onNext }: StoryboardStepProps) {
               onClick={() => handleSelectStoryboard(storyboard.id)}
               disabled={isSelecting || selectedStoryboardId === storyboard.id}
               className="w-full"
-              variant={selectedStoryboardId === storyboard.id ? 'default' : 'outline'}
+              variant={selectedStoryboardId === storyboard.id ? 'primary' : 'outline'}
             >
               {selectedStoryboardId === storyboard.id
                 ? 'Selected'

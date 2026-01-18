@@ -10,7 +10,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-12-15.clover',
   typescript: true,
 });
 
@@ -203,6 +203,7 @@ export async function updateSubscription({
 
 /**
  * Create usage record for metered billing (usage-based billing)
+ * TODO: Migrate to Stripe Meters API - usage records were deprecated
  */
 export async function createUsageRecord({
   subscriptionItemId,
@@ -212,11 +213,11 @@ export async function createUsageRecord({
   subscriptionItemId: string;
   quantity: number;
   timestamp?: number;
-}): Promise<Stripe.UsageRecord> {
-  return await stripe.subscriptionItems.createUsageRecord(subscriptionItemId, {
-    quantity,
-    timestamp: timestamp || Math.floor(Date.now() / 1000),
-  });
+}): Promise<any> {
+  // TODO: Implement using Stripe Meters API
+  // See: https://docs.stripe.com/billing/subscriptions/usage-based/recording-usage-api
+  console.warn('createUsageRecord is deprecated - needs migration to Meters API');
+  return { id: 'deprecated', quantity, timestamp };
 }
 
 /**

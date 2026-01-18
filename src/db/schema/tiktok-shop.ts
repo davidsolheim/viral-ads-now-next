@@ -43,6 +43,10 @@ export const tiktokShopProducts = pgTable(
     totalSales: integer('totalSales').default(0),
     engagementRate: decimal('engagementRate', { precision: 5, scale: 4 }), // 0.0000 to 1.0000
     trendingScore: decimal('trendingScore', { precision: 10, scale: 2 }).default('0'),
+    // Review/Rating metrics
+    averageRating: decimal('averageRating', { precision: 3, scale: 2 }), // 0.00 to 5.00
+    totalReviews: integer('totalReviews').default(0),
+    ratingDistribution: jsonb('ratingDistribution'), // Object with star counts: { 5: 100, 4: 50, 3: 10, 2: 5, 1: 2 }
     // Metadata
     metadata: jsonb('metadata'), // Additional product data
     lastUpdated: timestamp('lastUpdated', { mode: 'date' }).defaultNow().notNull(),
