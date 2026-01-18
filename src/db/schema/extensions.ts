@@ -17,7 +17,6 @@ export const referralStatusEnum = pgEnum('referral_status', ['pending', 'claimed
 export const integrationProviderEnum = pgEnum('integration_provider', [
   'openai',
   'replicate',
-  'shotstack',
   'wasabi',
   'custom',
 ]);

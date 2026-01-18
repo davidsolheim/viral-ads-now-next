@@ -17,7 +17,7 @@ RESEND_FROM_EMAIL='your-email@example.com'
 # AI Services
 OPENAI_API_KEY='your_openai_api_key'
 REPLICATE_API_TOKEN='your_replicate_token'
-SHOTSTACK_API_KEY='your_shotstack_api_key'
+REPLICATE_IMAGE_MODEL_VERSION=your_version_id_here
 
 # Storage
 WASABI_ACCESS_KEY_ID='your_wasabi_access_key'
@@ -28,3 +28,9 @@ WASABI_ENDPOINT='your_endpoint'
 
 # Vercel Blob (blog images)
 BLOB_READ_WRITE_TOKEN='your_vercel_blob_token'
+
+# Stripe
+STRIPE_SECRET_KEY='your_stripe_secret_key'
+STRIPE_PUBLISHABLE_KEY='your_stripe_publishable_key'
+STRIPE_WEBHOOK_SECRET='your_stripe_webhook_secret'
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY='your_stripe_publishable_key'

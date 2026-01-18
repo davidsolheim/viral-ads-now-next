@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getProject, getProductByProject, createScript, updateProjectStep } from '@/lib/db-queries';
 import { generateScript } from '@/lib/services/openai';
+import { trackUsageAndCheckLimits } from '@/lib/middleware/usage-tracking';
 import { z } from 'zod';
 
 const generateScriptSchema = z.object({
@@ -41,6 +42,24 @@ export async function POST(
 
     const body = await request.json();
     const options = generateScriptSchema.parse(body);
+
+    // Check usage limits before generating
+    const usageCheck = await trackUsageAndCheckLimits({
+      organizationId: project.organizationId,
+      userId: session.user.id,
+      projectId,
+      usageType: 'script_generation',
+      units: 1,
+      cost: 0.001, // Approximate cost per script generation (adjust based on actual costs)
+      provider: 'openai',
+    });
+
+    if (!usageCheck.allowed) {
+      return NextResponse.json(
+        { error: usageCheck.reason || 'Usage limit exceeded' },
+        { status: 403 }
+      );
+    }
 
     // Generate script using OpenAI
     const scriptContent = await generateScript({

@@ -36,7 +36,6 @@ export const workflowEventTypeEnum = pgEnum('workflow_event_type', [
 export const workflowProviderEnum = pgEnum('workflow_provider', [
   'openai',
   'replicate',
-  'shotstack',
   'wasabi',
 ]);
 

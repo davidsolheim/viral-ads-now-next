@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 const productLinks = [
   { href: '/tiktok-ads', label: 'TikTok Ads' },
@@ -24,9 +25,13 @@ export function MarketingFooter() {
         <div className="grid gap-8 md:grid-cols-4">
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white">
-                VA
-              </span>
+              <Image
+                src="/viral-ads-now-icon.png"
+                alt="Viral Ads Now"
+                width={36}
+                height={36}
+                className="h-9 w-9 rounded-xl"
+              />
               Viral Ads Now
             </div>
             <p className="text-sm text-gray-600">

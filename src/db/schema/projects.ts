@@ -28,8 +28,18 @@ export const musicCategoryEnum = pgEnum('music_category', [
 
 export const musicLicenseEnum = pgEnum('music_license', ['royalty_free', 'licensed', 'custom']);
 
+export const adStyleEnum = pgEnum('ad_style', [
+  'conversational',
+  'energetic',
+  'professional',
+  'casual',
+  'sex_appeal',
+]);
+
 export const projectStepEnum = pgEnum('project_step', [
   'product',
+  'style',
+  'storyboard',
   'script',
   'scenes',
   'images',
@@ -58,6 +68,7 @@ export const projects = pgTable('projects', {
     .references(() => users.id),
   productId: varchar('productId', { length: 255 }),
   productUrl: text('productUrl'),
+  adStyle: adStyleEnum('adStyle'),
   currentStep: projectStepEnum('currentStep').notNull().default('product'),
   status: projectStatusEnum('status').notNull().default('draft'),
   settings: jsonb('settings'), // Stores settings like music volume, caption styles, etc.

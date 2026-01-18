@@ -30,7 +30,7 @@ export function ScriptStep({ projectId, onNext }: ScriptStepProps) {
 
       <div className="mt-6 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-900 mb-2">
             Script Style
           </label>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -68,7 +68,7 @@ export function ScriptStep({ projectId, onNext }: ScriptStepProps) {
               <h3 className="mb-3 text-lg font-semibold text-gray-900">
                 Generated Script
               </h3>
-              <p className="whitespace-pre-wrap text-gray-700">{script}</p>
+              <p className="whitespace-pre-wrap text-gray-900">{script}</p>
             </div>
 
             <div className="flex gap-3">

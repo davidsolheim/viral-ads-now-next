@@ -127,9 +127,18 @@ export default function PricingPage() {
                   <li key={feature}>• {feature}</li>
                 ))}
               </ul>
+              {session?.user?.activeOrganizationId ? (
+                <CheckoutButton
+                  organizationId={session.user.activeOrganizationId}
+                  planSlug={plan.name.toLowerCase()}
+                  billingCycle={billing}
+                  children={<span className="mt-6 w-full">Get started</span>}
+                />
+              ) : (
               <Link href="/auth/signin">
                 <Button className="mt-6 w-full">Get started</Button>
               </Link>
+              )}
             </div>
           ))}
         </div>

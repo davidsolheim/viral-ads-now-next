@@ -87,9 +87,6 @@ OPENAI_API_KEY=sk-xxx
 # Replicate
 REPLICATE_API_TOKEN=r8_xxx
 
-# Shotstack
-SHOTSTACK_API_KEY=xxx
-
 # Wasabi
 WASABI_ACCESS_KEY_ID=xxx
 WASABI_SECRET_ACCESS_KEY=xxx

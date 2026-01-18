@@ -101,14 +101,14 @@ export default function ContactPage() {
               <Input label="Company" name="company" placeholder="Brand name" />
               <Input label="Monthly creative volume" name="volume" placeholder="50+ videos" />
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="message">
+                <label className="mb-1 block text-sm font-medium text-gray-900" htmlFor="message">
                   Project details
                 </label>
                 <textarea
                   id="message"
                   name="message"
                   rows={5}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="Tell us about your products, goals, and timeline."
                 />
               </div>

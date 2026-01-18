@@ -180,7 +180,6 @@ See `.env.example` for a complete list of required environment variables.
 - `WASABI_*`: Wasabi storage credentials
 - `OPENAI_API_KEY`: OpenAI API key
 - `REPLICATE_API_TOKEN`: Replicate API token
-- `SHOTSTACK_API_KEY`: Shotstack API key
 
 ## Contributing
 

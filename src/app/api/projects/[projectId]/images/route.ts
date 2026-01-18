@@ -8,6 +8,7 @@ import {
 } from '@/lib/db-queries';
 import { generateImage } from '@/lib/services/replicate';
 import { uploadFromUrl } from '@/lib/services/wasabi';
+import { trackUsageAndCheckLimits } from '@/lib/middleware/usage-tracking';
 import { z } from 'zod';
 
 const generateImagesSchema = z.object({
@@ -45,6 +46,25 @@ export async function POST(
 
     const body = await request.json();
     const options = generateImagesSchema.parse(body);
+
+    // Check usage limits before generating
+    const imageCount = scenes.length;
+    const usageCheck = await trackUsageAndCheckLimits({
+      organizationId: project.organizationId,
+      userId: session.user.id,
+      projectId,
+      usageType: 'image_generation',
+      units: imageCount,
+      cost: imageCount * 0.01, // Approximate cost per image (adjust based on actual costs)
+      provider: 'replicate',
+    });
+
+    if (!usageCheck.allowed) {
+      return NextResponse.json(
+        { error: usageCheck.reason || 'Usage limit exceeded' },
+        { status: 403 }
+      );
+    }
 
     // Generate images for each scene in parallel
     const imagePromises = scenes.map(async (scene: any) => {

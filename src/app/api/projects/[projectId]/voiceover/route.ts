@@ -9,6 +9,7 @@ import {
 } from '@/lib/db-queries';
 import { generateVoiceover } from '@/lib/services/replicate';
 import { uploadFromUrl } from '@/lib/services/wasabi';
+import { trackUsageAndCheckLimits } from '@/lib/middleware/usage-tracking';
 import { z } from 'zod';
 
 const generateVoiceoverSchema = z.object({
@@ -52,6 +53,25 @@ export async function POST(
       return NextResponse.json(
         { error: 'No script selected. Please generate a script first.' },
         { status: 400 }
+      );
+    }
+
+    // Check usage limits before generating
+    const scriptLength = selectedScript.content.length;
+    const usageCheck = await trackUsageAndCheckLimits({
+      organizationId: project.organizationId,
+      userId: session.user.id,
+      projectId,
+      usageType: 'voiceover_generation',
+      units: Math.ceil(scriptLength / 1000), // Count units based on script length
+      cost: 0.005, // Approximate cost per voiceover (adjust based on actual costs)
+      provider: 'replicate',
+    });
+
+    if (!usageCheck.allowed) {
+      return NextResponse.json(
+        { error: usageCheck.reason || 'Usage limit exceeded' },
+        { status: 403 }
       );
     }
 

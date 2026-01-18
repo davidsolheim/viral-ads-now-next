@@ -23,8 +23,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = createProjectSchema.parse(body);
 
-    // TODO: Check if user has access to the organization
-    await ensureDefaultOrganization(session.user.id, validatedData.organizationId);
+    // Check if user has access to the organization
+    const { checkUserOrganizationAccess } = await import('@/lib/db-queries');
+    const member = await checkUserOrganizationAccess(session.user.id, validatedData.organizationId);
+
+    if (!member) {
+      return NextResponse.json(
+        { error: 'You do not have access to this organization' },
+        { status: 403 }
+      );
+    }
 
     const project = await createProject({
       name: validatedData.name,

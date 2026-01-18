@@ -10,26 +10,26 @@ import Link from 'next/link';
 
 interface DashboardClientProps {
   userId: string;
+  organizationId?: string;
 }
 
-export function DashboardClient({ userId }: DashboardClientProps) {
+export function DashboardClient({ userId, organizationId }: DashboardClientProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [projectName, setProjectName] = useState('');
-  
-  // For now, we'll use a hardcoded organization ID
-  // In a full implementation, this would come from user's active organization
-  const organizationId = 'default-org';
-  
-  const { data: projects, isLoading } = useProjects(organizationId);
+
+  // Use provided organizationId or fall back to default
+  const activeOrganizationId = organizationId || 'default-org';
+
+  const { data: projects, isLoading } = useProjects(activeOrganizationId);
   const createProject = useCreateProject();
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!projectName.trim()) return;
+    if (!projectName.trim() || !activeOrganizationId) return;
 
     await createProject.mutateAsync({
       name: projectName,
-      organizationId,
+      organizationId: activeOrganizationId,
     });
 
     setProjectName('');
@@ -121,12 +121,19 @@ export function DashboardClient({ userId }: DashboardClientProps) {
             />
           </svg>
           <h3 className="mt-4 text-lg font-medium text-gray-900">No projects yet</h3>
-          <p className="mt-2 text-sm text-gray-600">
-            Get started by creating your first video ad project
+          <p className="mt-2 text-sm text-gray-600 text-center max-w-md">
+            Get started by creating your first video ad project. You can manage your organization and team members in the settings.
           </p>
-          <Button onClick={() => setIsCreateModalOpen(true)} className="mt-6">
-            Create Project
-          </Button>
+          <div className="flex gap-3 mt-6">
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              Create Project
+            </Button>
+            <Link href="/settings/organizations">
+              <Button variant="outline">
+                Manage Organization
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
 

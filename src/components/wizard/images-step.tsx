@@ -41,7 +41,7 @@ export function ImagesStep({ projectId, onNext }: ImagesStepProps) {
 
       <div className="mt-6 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-900 mb-2">
             Image Style
           </label>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -88,7 +88,7 @@ export function ImagesStep({ projectId, onNext }: ImagesStepProps) {
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
                       {image.sceneNumber}
                     </span>
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-gray-900">
                       Scene {image.sceneNumber}
                     </span>
                   </div>

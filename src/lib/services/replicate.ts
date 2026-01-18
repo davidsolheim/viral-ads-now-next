@@ -56,7 +56,21 @@ export async function generateVoiceover(options: VoiceoverOptions): Promise<stri
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(`Replicate API error: ${error.detail || response.statusText}`);
+      const errorMessage = error.detail || response.statusText;
+      
+      // Provide helpful error message if version doesn't exist
+      if (errorMessage.includes('version does not exist') || errorMessage.includes('permission')) {
+        throw new Error(
+          `Replicate model version not found. Please set REPLICATE_IMAGE_MODEL_VERSION in your .env.local file.\n` +
+          `To find the correct version:\n` +
+          `1. Visit https://replicate.com/stability-ai/stable-diffusion-xl-base-1.0\n` +
+          `2. Or run: curl -H "Authorization: Token YOUR_TOKEN" https://api.replicate.com/v1/models/stability-ai/stable-diffusion-xl-base-1.0/versions\n` +
+          `3. Copy the version ID and set it as REPLICATE_IMAGE_MODEL_VERSION in .env.local\n` +
+          `Original error: ${errorMessage}`
+        );
+      }
+      
+      throw new Error(`Replicate API error: ${errorMessage}`);
     }
 
     let prediction: ReplicateResponse = await response.json();
@@ -128,6 +142,11 @@ export async function generateImage(options: ImageGenerationOptions): Promise<st
 
   const enhancedPrompt = `${prompt}, ${stylePrompts[style]}`;
 
+  // Get model version from env or use default
+  // To find your model version: https://replicate.com/stability-ai/stable-diffusion-xl-base-1.0
+  // Or use: curl -H "Authorization: Token YOUR_TOKEN" https://api.replicate.com/v1/models/stability-ai/stable-diffusion-xl-base-1.0/versions
+  const modelVersion = process.env.REPLICATE_IMAGE_MODEL_VERSION || '39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c1565e08b';
+
   try {
     // Start the prediction
     const response = await fetch('https://api.replicate.com/v1/predictions', {
@@ -137,7 +156,7 @@ export async function generateImage(options: ImageGenerationOptions): Promise<st
         'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
       },
       body: JSON.stringify({
-        version: 'stability-ai/sdxl:latest', // Update with actual version
+        version: modelVersion,
         input: {
           prompt: enhancedPrompt,
           width,
@@ -149,7 +168,21 @@ export async function generateImage(options: ImageGenerationOptions): Promise<st
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(`Replicate API error: ${error.detail || response.statusText}`);
+      const errorMessage = error.detail || response.statusText;
+      
+      // Provide helpful error message if version doesn't exist
+      if (errorMessage.includes('version does not exist') || errorMessage.includes('permission')) {
+        throw new Error(
+          `Replicate model version not found. Please set REPLICATE_IMAGE_MODEL_VERSION in your .env.local file.\n` +
+          `To find the correct version:\n` +
+          `1. Visit https://replicate.com/stability-ai/stable-diffusion-xl-base-1.0\n` +
+          `2. Or run: curl -H "Authorization: Token YOUR_TOKEN" https://api.replicate.com/v1/models/stability-ai/stable-diffusion-xl-base-1.0/versions\n` +
+          `3. Copy the version ID and set it as REPLICATE_IMAGE_MODEL_VERSION in .env.local\n` +
+          `Original error: ${errorMessage}`
+        );
+      }
+      
+      throw new Error(`Replicate API error: ${errorMessage}`);
     }
 
     let prediction: ReplicateResponse = await response.json();
@@ -188,6 +221,126 @@ export async function generateImage(options: ImageGenerationOptions): Promise<st
     return imageUrl;
   } catch (error) {
     console.error('Error generating image:', error);
+    throw error;
+  }
+}
+
+/**
+ * Generate multiple image candidates for selection
+ */
+export async function generateImageCandidates(
+  options: ImageGenerationOptions,
+  count: number = 2
+): Promise<string[]> {
+  const {
+    prompt,
+    width = 1024,
+    height = 1024,
+    style = 'photorealistic',
+  } = options;
+
+  if (!process.env.REPLICATE_API_TOKEN) {
+    throw new Error('REPLICATE_API_TOKEN is not configured');
+  }
+
+  // Enhance prompt based on style
+  const stylePrompts = {
+    photorealistic: 'photorealistic, high quality, detailed, professional photography',
+    artistic: 'artistic, creative, stylized, visually striking',
+    cinematic: 'cinematic lighting, dramatic, film-like, high production value',
+    product: 'product photography, clean background, professional lighting, commercial',
+  };
+
+  const enhancedPrompt = `${prompt}, ${stylePrompts[style]}`;
+
+  // Get model version from env or use default
+  // To find your model version: https://replicate.com/stability-ai/stable-diffusion-xl-base-1.0
+  // Or use: curl -H "Authorization: Token YOUR_TOKEN" https://api.replicate.com/v1/models/stability-ai/stable-diffusion-xl-base-1.0/versions
+  const modelVersion = process.env.REPLICATE_IMAGE_MODEL_VERSION || '39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c1565e08b';
+
+  try {
+    // Start the prediction with multiple outputs
+    const response = await fetch('https://api.replicate.com/v1/predictions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+      },
+      body: JSON.stringify({
+        version: modelVersion,
+        input: {
+          prompt: enhancedPrompt,
+          width,
+          height,
+          num_outputs: count,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      const errorMessage = error.detail || response.statusText;
+      
+      // Provide helpful error message if version doesn't exist
+      if (errorMessage.includes('version does not exist') || errorMessage.includes('permission')) {
+        throw new Error(
+          `Replicate model version not found. Please set REPLICATE_IMAGE_MODEL_VERSION in your .env.local file.\n` +
+          `To find the correct version:\n` +
+          `1. Visit https://replicate.com/stability-ai/stable-diffusion-xl-base-1.0\n` +
+          `2. Or run: curl -H "Authorization: Token YOUR_TOKEN" https://api.replicate.com/v1/models/stability-ai/stable-diffusion-xl-base-1.0/versions\n` +
+          `3. Copy the version ID and set it as REPLICATE_IMAGE_MODEL_VERSION in .env.local\n` +
+          `Original error: ${errorMessage}`
+        );
+      }
+      
+      throw new Error(`Replicate API error: ${errorMessage}`);
+    }
+
+    let prediction: ReplicateResponse = await response.json();
+
+    // Poll for completion
+    while (prediction.status === 'starting' || prediction.status === 'processing') {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+        headers: {
+          'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+        },
+      });
+
+      if (!pollResponse.ok) {
+        throw new Error('Failed to poll prediction status');
+      }
+
+      prediction = await pollResponse.json();
+    }
+
+    if (prediction.status === 'failed') {
+      throw new Error(`Image generation failed: ${prediction.error}`);
+    }
+
+    if (prediction.status === 'canceled') {
+      throw new Error('Image generation was canceled');
+    }
+
+    // Handle array or single output
+    let imageUrls: string[];
+    if (Array.isArray(prediction.output)) {
+      imageUrls = prediction.output.filter((url): url is string => typeof url === 'string');
+    } else if (prediction.output) {
+      imageUrls = [prediction.output];
+    } else {
+      throw new Error('No image URLs returned from Replicate');
+    }
+
+    // Ensure we have the requested number of images
+    if (imageUrls.length < count) {
+      console.warn(`Requested ${count} images but only got ${imageUrls.length}`);
+    }
+
+    return imageUrls.slice(0, count);
+  } catch (error) {
+    console.error('Error generating image candidates:', error);
     throw error;
   }
 }

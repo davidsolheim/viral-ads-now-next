@@ -10,4 +10,5 @@ export * from './workflow';
 export * from './assets';
 export * from './analytics';
 export * from './extensions';
+export * from './tiktok-shop';
 export * from './relations';

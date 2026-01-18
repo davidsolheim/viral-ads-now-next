@@ -39,6 +39,7 @@ export interface UploadOptions {
   assetType?: AssetType;
   folder?: string;
   metadata?: Record<string, string>;
+  fetchHeaders?: Record<string, string>; // Optional headers for fetching from URL
 }
 
 export interface UploadResult {
@@ -124,7 +125,17 @@ export async function uploadFromUrl(
   options: Partial<UploadOptions> = {}
 ): Promise<UploadResult> {
   try {
-    const response = await fetch(url);
+    // Use provided headers or default headers for image fetching
+    const defaultHeaders: Record<string, string> = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'image/*,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Referer': new URL(url).origin,
+    };
+    
+    const headers = options.fetchHeaders || defaultHeaders;
+    
+    const response = await fetch(url, { headers });
     if (!response.ok) {
       throw new Error(`Failed to fetch file from URL: ${response.statusText}`);
     }

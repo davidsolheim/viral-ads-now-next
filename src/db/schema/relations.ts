@@ -34,6 +34,14 @@ import {
 import { assetLibraries, libraryAssets } from './assets';
 import { analyticsReports, apiKeys, auditLogs, dataRetentionPolicies, notifications } from './analytics';
 import { integrationConfigs, referrals, resourceTags, tags, webhookDeliveries, webhooks } from './extensions';
+import {
+  tiktokShopProducts,
+  tiktokShopVideos,
+  tiktokShopLiveStreams,
+  tiktokShopCreators,
+  tiktokShopEngagement,
+  tiktokShopRefreshQueue,
+} from './tiktok-shop';
 
 export const usersRelations = relations(users, ({ many, one }) => ({
   accounts: many(accounts),
@@ -362,3 +370,34 @@ export const integrationConfigsRelations = relations(integrationConfigs, ({ one 
 }));
 
 export const verificationTokensRelations = relations(verificationTokens, () => ({}));
+
+// TikTok Shop Relations
+export const tiktokShopVideosRelations = relations(tiktokShopVideos, ({ one, many }) => ({
+  creator: one(tiktokShopCreators, {
+    fields: [tiktokShopVideos.creatorId],
+    references: [tiktokShopCreators.tiktokCreatorId],
+  }),
+  engagement: many(tiktokShopEngagement),
+}));
+
+export const tiktokShopLiveStreamsRelations = relations(tiktokShopLiveStreams, ({ one, many }) => ({
+  creator: one(tiktokShopCreators, {
+    fields: [tiktokShopLiveStreams.creatorId],
+    references: [tiktokShopCreators.tiktokCreatorId],
+  }),
+  engagement: many(tiktokShopEngagement),
+}));
+
+export const tiktokShopCreatorsRelations = relations(tiktokShopCreators, ({ many }) => ({
+  videos: many(tiktokShopVideos),
+  liveStreams: many(tiktokShopLiveStreams),
+  engagement: many(tiktokShopEngagement),
+}));
+
+export const tiktokShopProductsRelations = relations(tiktokShopProducts, ({ many }) => ({
+  engagement: many(tiktokShopEngagement),
+}));
+
+export const tiktokShopEngagementRelations = relations(tiktokShopEngagement, () => ({}));
+
+export const tiktokShopRefreshQueueRelations = relations(tiktokShopRefreshQueue, () => ({}));

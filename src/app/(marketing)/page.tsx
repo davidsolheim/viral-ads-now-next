@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
 const stats = [
@@ -150,26 +151,14 @@ export default function MarketingHomePage() {
               <span>✅ Secure AI workflows</span>
             </div>
           </div>
-
-          <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-xl">
-            <div className="rounded-2xl bg-gray-900 p-4 text-white">
-              <p className="text-xs uppercase tracking-wide text-gray-300">Demo timeline</p>
-              <h3 className="mt-3 text-lg font-semibold">Glow Serum TikTok Ad</h3>
-              <div className="mt-4 space-y-3 text-sm text-gray-300">
-                <div className="rounded-lg bg-white/10 px-3 py-2">Scene 1 · Hook + Problem</div>
-                <div className="rounded-lg bg-white/10 px-3 py-2">Scene 2 · Product reveal</div>
-                <div className="rounded-lg bg-white/10 px-3 py-2">Scene 3 · Proof + CTA</div>
-              </div>
-              <p className="mt-4 text-xs text-gray-400">Ready for export in 4:32</p>
-            </div>
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              {stats.map((stat) => (
-                <div key={stat.label} className="rounded-xl bg-blue-50 px-4 py-3 text-center">
-                  <p className="text-lg font-semibold text-gray-900">{stat.value}</p>
-                  <p className="text-xs text-gray-600">{stat.label}</p>
-                </div>
-              ))}
-            </div>
+          <div className="relative h-[400px] w-full overflow-hidden rounded-2xl shadow-xl lg:h-[500px]">
+            <Image
+              src="/viral-ads-now-banner.png"
+              alt="Viral Ads Now - Create Instant Video Ads"
+              fill
+              className="object-cover"
+              priority
+            />
           </div>
         </div>
       </section>

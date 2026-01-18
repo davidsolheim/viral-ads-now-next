@@ -218,35 +218,65 @@ export function useGenerateVoiceover(projectId: string) {
   });
 }
 
-export function useCompileVideo(projectId: string) {
+export function useAutoGenerate(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (options?: {
-      musicVolume?: number;
-      resolution?: '480p' | '720p' | '1080p' | '4k';
-      includeCaptions?: boolean;
-      captionStyle?: any;
-    }) => {
-      const response = await fetch(`/api/projects/${projectId}/compile`, {
+    mutationFn: async (options: {
+      style?: 'conversational' | 'energetic' | 'professional' | 'casual' | 'sex_appeal';
+    } = {}) => {
+      const response = await fetch(`/api/projects/${projectId}/auto-generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(options || {}),
+        body: JSON.stringify(options),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to compile video');
+        throw new Error(error.error || 'Failed to auto-generate video');
       }
 
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      toast.success('Video compiled successfully!');
     },
     onError: (error: Error) => {
       toast.error(error.message);
     },
   });
 }
+
+export function useGenerateStoryboards(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (options: {
+      style: 'conversational' | 'energetic' | 'professional' | 'casual' | 'sex_appeal';
+      duration: number;
+      aspectRatio: 'portrait' | 'landscape' | 'square';
+    }) => {
+      const response = await fetch(`/api/projects/${projectId}/storyboards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(options),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate storyboards');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+// Note: useCompileVideo hook removed - video compilation is now handled client-side
+// in the compile-step component using FFmpeg.wasm

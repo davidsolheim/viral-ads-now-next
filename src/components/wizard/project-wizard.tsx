@@ -4,10 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ProductStep } from './product-step';
-import { ScriptStep } from './script-step';
-import { ScenesStep } from './scenes-step';
-import { ImagesStep } from './images-step';
-import { VoiceoverStep } from './voiceover-step';
+import { StyleStep } from './style-step';
+import { StoryboardStep } from './storyboard-step';
 import { CompileStep } from './compile-step';
 
 interface Project {
@@ -27,15 +25,9 @@ interface ProjectWizardProps {
 
 const steps = [
   { id: 'product', name: 'Product', description: 'Add product details' },
-  { id: 'script', name: 'Script', description: 'Generate ad script' },
-  { id: 'scenes', name: 'Scenes', description: 'Break into scenes' },
-  { id: 'images', name: 'Images', description: 'Generate visuals' },
-  { id: 'video', name: 'Video', description: 'Create video clips' },
-  { id: 'voiceover', name: 'Voiceover', description: 'Add voiceover' },
-  { id: 'music', name: 'Music', description: 'Select music' },
-  { id: 'captions', name: 'Captions', description: 'Add captions' },
-  { id: 'compile', name: 'Compile', description: 'Finalize video' },
-  { id: 'complete', name: 'Complete', description: 'Download & share' },
+  { id: 'style', name: 'Style', description: 'Choose advertisement style' },
+  { id: 'storyboard', name: 'Storyboard', description: 'Select your storyboard' },
+  { id: 'compile', name: 'Download', description: 'Download your video' },
 ];
 
 export function ProjectWizard({ project }: ProjectWizardProps) {
@@ -154,107 +146,28 @@ export function ProjectWizard({ project }: ProjectWizardProps) {
             />
           )}
 
-          {currentStepId === 'script' && (
-            <ScriptStep
+          {currentStepId === 'style' && (
+            <StyleStep
               projectId={project.id}
               onNext={() => setActiveStep(activeStep + 1)}
             />
           )}
 
-          {currentStepId === 'scenes' && (
-            <ScenesStep
+          {currentStepId === 'storyboard' && (
+            <StoryboardStep
               projectId={project.id}
               onNext={() => setActiveStep(activeStep + 1)}
             />
-          )}
-
-          {currentStepId === 'images' && (
-            <ImagesStep
-              projectId={project.id}
-              onNext={() => setActiveStep(activeStep + 1)}
-            />
-          )}
-
-          {currentStepId === 'video' && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Video Clips</h2>
-              <p className="mt-2 text-gray-600">
-                Animate images into video clips (Coming soon)
-              </p>
-              <Button onClick={() => setActiveStep(activeStep + 1)} className="mt-6">
-                Continue to Voiceover
-              </Button>
-            </div>
-          )}
-
-          {currentStepId === 'voiceover' && (
-            <VoiceoverStep
-              projectId={project.id}
-              onNext={() => setActiveStep(activeStep + 1)}
-            />
-          )}
-
-          {currentStepId === 'music' && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Background Music</h2>
-              <p className="mt-2 text-gray-600">
-                Select background music (Coming soon)
-              </p>
-              <Button onClick={() => setActiveStep(activeStep + 1)} className="mt-6">
-                Continue to Captions
-              </Button>
-            </div>
-          )}
-
-          {currentStepId === 'captions' && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Captions</h2>
-              <p className="mt-2 text-gray-600">
-                Add and style captions (Coming soon)
-              </p>
-              <Button onClick={() => setActiveStep(activeStep + 1)} className="mt-6">
-                Continue to Compile
-              </Button>
-            </div>
           )}
 
           {currentStepId === 'compile' && (
             <CompileStep
               projectId={project.id}
-              onNext={() => setActiveStep(activeStep + 1)}
+              onNext={() => {
+                // After compile, we're done - could redirect to dashboard or show success
+                window.location.href = '/dashboard';
+              }}
             />
-          )}
-
-          {currentStepId === 'complete' && (
-            <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                <svg
-                  className="h-10 w-10 text-green-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h2 className="mt-6 text-2xl font-bold text-gray-900">
-                Video Complete!
-              </h2>
-              <p className="mt-2 text-gray-600">
-                Your viral ad is ready to download and share
-              </p>
-              <div className="mt-8 flex justify-center gap-4">
-                <Button variant="outline">Download Video</Button>
-                <Link href="/dashboard">
-                  <Button>Back to Dashboard</Button>
-                </Link>
-              </div>
-            </div>
           )}
         </div>
       </div>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
@@ -15,9 +16,13 @@ export function MarketingHeader() {
     <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white">
-            VA
-          </span>
+          <Image
+            src="/viral-ads-now-icon.png"
+            alt="Viral Ads Now"
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-xl"
+          />
           Viral Ads Now
         </Link>
 
