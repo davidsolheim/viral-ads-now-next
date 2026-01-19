@@ -19,6 +19,7 @@ export const integrationProviderEnum = pgEnum('integration_provider', [
   'replicate',
   'wasabi',
   'custom',
+  'internal',
 ]);
 
 export const tags = pgTable('tags', {

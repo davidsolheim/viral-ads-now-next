@@ -31,6 +31,10 @@ import {
   socialAccounts,
   socialPosts,
   postScheduleQueue,
+  adStyleEnum,
+  assetTypeEnum,
+  usageTypeEnum,
+  integrationProviderEnum,
 } from '@/db/schema';
 import { eq, and, desc, isNull, or, sql, gte, lte, lt, count, like, asc, inArray } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
@@ -322,11 +326,11 @@ export async function updateProjectStatus(
   return updated;
 }
 
-export async function updateProjectStyle(projectId: string, style: string) {
+export async function updateProjectStyle(projectId: string, style: 'conversational' | 'energetic' | 'professional' | 'casual' | 'sex_appeal') {
   const db = await getDb();
   const [updated] = await db
     .update(projects)
-    .set({ adStyle: style as any, updatedAt: new Date() })
+    .set({ adStyle: style, updatedAt: new Date() })
     .where(eq(projects.id, projectId))
     .returning();
 
@@ -953,7 +957,7 @@ export async function createMediaAsset(data: {
   return asset;
 }
 
-export async function getMediaAssetsByProject(projectId: string, type?: string) {
+export async function getMediaAssetsByProject(projectId: string, type?: 'image' | 'video_clip' | 'voiceover' | 'music') {
   const db = await getDb();
   if (type) {
     return await db
@@ -961,7 +965,7 @@ export async function getMediaAssetsByProject(projectId: string, type?: string) 
       .from(mediaAssets)
       .where(and(
         eq(mediaAssets.projectId, projectId),
-        eq(mediaAssets.type, type as any)
+        eq(mediaAssets.type, type)
       ))
       .orderBy(desc(mediaAssets.createdAt));
   }
@@ -1721,7 +1725,7 @@ export async function getUsageRecords(
   organizationId: string,
   startDate?: Date,
   endDate?: Date,
-  type?: string
+  type?: 'script_generation' | 'image_generation' | 'video_generation' | 'voiceover_generation' | 'video_render'
 ) {
   const db = await getDb();
 
@@ -1736,7 +1740,7 @@ export async function getUsageRecords(
   }
 
   if (type) {
-    conditions.push(eq(usageRecords.type, type as any));
+    conditions.push(eq(usageRecords.type, type));
   }
 
   const records = await db
@@ -1758,7 +1762,7 @@ export async function createUsageRecord(data: {
   type: 'script_generation' | 'image_generation' | 'video_generation' | 'voiceover_generation' | 'video_render';
   units: number;
   cost?: string; // Decimal as string
-  provider?: string;
+  provider?: 'openai' | 'replicate' | 'wasabi' | 'custom' | 'internal';
   metadata?: any;
 }) {
   const db = await getDb();
@@ -1773,7 +1777,7 @@ export async function createUsageRecord(data: {
       type: data.type,
       units: data.units,
       cost: data.cost,
-      provider: data.provider as any,
+      provider: data.provider,
       metadata: data.metadata ? JSON.stringify(data.metadata) : null,
       createdAt: new Date(),
     })

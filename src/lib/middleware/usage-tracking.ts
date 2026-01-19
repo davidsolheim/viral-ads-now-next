@@ -24,7 +24,7 @@ export async function trackUsageAndCheckLimits(options: {
   usageType: UsageType;
   units: number;
   cost?: number; // Cost in dollars
-  provider?: string;
+  provider?: 'openai' | 'replicate' | 'wasabi' | 'custom' | 'internal';
   metadata?: any;
 }): Promise<UsageTrackingResult> {
   const { organizationId, userId, projectId, usageType, units, cost, provider, metadata } = options;
