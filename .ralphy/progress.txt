@@ -1,2 +1,9 @@
 # Ralphy Progress Log
 
+## Completed Tasks
+- Created Social Media step component (`social-step.tsx`)
+  - Implemented account connection UI for TikTok, Instagram, YouTube, Facebook, Twitter
+  - Added platform selection and scheduling functionality
+  - Followed existing step component patterns with readOnly support
+  - Added social step to wizard configuration after TikTok step
+

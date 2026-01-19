@@ -13,6 +13,7 @@ import { MusicStep } from './music-step';
 import { CaptionsStep } from './captions-step';
 import { PreviewStep } from './preview-step';
 import { TikTokStep } from './tiktok-step';
+import { SocialStep } from './social-step';
 import { useAutoGenerateStream } from '@/hooks/use-auto-generate-stream';
 
 interface Project {
@@ -41,13 +42,14 @@ const wizardSteps = [
   { id: 'captions', name: 'Captions', description: 'Style video captions' },
   { id: 'compile', name: 'Preview', description: 'Compile and export video' },
   { id: 'tiktok', name: 'TikTok', description: 'Prepare TikTok metadata' },
+  { id: 'social', name: 'Social Media', description: 'Post to social platforms' },
 ];
 
 const normalizeStepId = (stepId?: string | null) => {
   if (!stepId) return 'product';
   if (stepId === 'preview') return 'compile';
-  if (stepId === 'complete') return 'tiktok';
-  if (stepId === 'failed') return 'tiktok';
+  if (stepId === 'complete') return 'social';
+  if (stepId === 'failed') return 'social';
   if (stepId === 'style' || stepId === 'concept') return 'script';
   return stepId;
 };
@@ -276,6 +278,14 @@ export function ProjectWizard({ project }: ProjectWizardProps) {
 
           {currentStepId === 'tiktok' && (
             <TikTokStep
+              projectId={project.id}
+              onNext={() => setActiveStep(activeStep + 1)}
+              readOnly={isAutomatic}
+            />
+          )}
+
+          {currentStepId === 'social' && (
+            <SocialStep
               projectId={project.id}
               onNext={() => {
                 window.location.href = '/dashboard';
