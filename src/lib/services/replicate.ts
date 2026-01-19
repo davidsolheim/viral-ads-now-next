@@ -344,3 +344,250 @@ export async function generateImageCandidates(
     throw error;
   }
 }
+
+export interface VideoGenerationOptions {
+  imageUrl: string;
+  prompt?: string;
+  model?: string;
+}
+
+/**
+ * Generate an animated video clip from an image
+ */
+export async function animateVideo(options: VideoGenerationOptions): Promise<string> {
+  const { imageUrl, prompt = '', model } = options;
+
+  if (!process.env.IMAGE_AI_API_KEY) {
+    throw new Error('IMAGE_AI_API_KEY is not configured');
+  }
+
+  const modelVersion = process.env.REPLICATE_VIDEO_MODEL_VERSION;
+  if (!modelVersion) {
+    throw new Error('REPLICATE_VIDEO_MODEL_VERSION is not configured');
+  }
+
+  const response = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      version: modelVersion,
+      input: {
+        image: imageUrl,
+        prompt,
+        model,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Replicate API error: ${error.detail || response.statusText}`);
+  }
+
+  let prediction: ReplicateResponse = await response.json();
+  while (prediction.status === 'starting' || prediction.status === 'processing') {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+      headers: {
+        'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
+      },
+    });
+    if (!pollResponse.ok) {
+      throw new Error('Failed to poll prediction status');
+    }
+    prediction = await pollResponse.json();
+  }
+
+  if (prediction.status === 'failed') {
+    throw new Error(`Video generation failed: ${prediction.error}`);
+  }
+
+  const videoUrl = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;
+  if (!videoUrl) {
+    throw new Error('No video URL returned from Replicate');
+  }
+  return videoUrl;
+}
+
+/**
+ * Generate a video clip using Kling model
+ */
+export async function generateKlingVideo(options: VideoGenerationOptions): Promise<string> {
+  const { imageUrl, prompt = '', model } = options;
+
+  if (!process.env.IMAGE_AI_API_KEY) {
+    throw new Error('IMAGE_AI_API_KEY is not configured');
+  }
+
+  const modelVersion = process.env.KLING_VIDEO_MODEL_VERSION;
+  if (!modelVersion) {
+    throw new Error('KLING_VIDEO_MODEL_VERSION is not configured');
+  }
+
+  const response = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      version: modelVersion,
+      input: {
+        image: imageUrl,
+        prompt,
+        model,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Replicate API error: ${error.detail || response.statusText}`);
+  }
+
+  let prediction: ReplicateResponse = await response.json();
+  while (prediction.status === 'starting' || prediction.status === 'processing') {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+      headers: {
+        'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
+      },
+    });
+    if (!pollResponse.ok) {
+      throw new Error('Failed to poll prediction status');
+    }
+    prediction = await pollResponse.json();
+  }
+
+  if (prediction.status === 'failed') {
+    throw new Error(`Kling video generation failed: ${prediction.error}`);
+  }
+
+  const videoUrl = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;
+  if (!videoUrl) {
+    throw new Error('No video URL returned from Kling');
+  }
+  return videoUrl;
+}
+
+export interface MusicGenerationOptions {
+  prompt: string;
+  durationSeconds?: number;
+}
+
+export async function generateMusicLyra(options: MusicGenerationOptions): Promise<string> {
+  const { prompt, durationSeconds = 30 } = options;
+
+  if (!process.env.IMAGE_AI_API_KEY) {
+    throw new Error('IMAGE_AI_API_KEY is not configured');
+  }
+
+  const modelVersion = process.env.REPLICATE_MUSIC_LYRA_VERSION;
+  if (!modelVersion) {
+    throw new Error('REPLICATE_MUSIC_LYRA_VERSION is not configured');
+  }
+
+  const response = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      version: modelVersion,
+      input: {
+        prompt,
+        duration: durationSeconds,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Replicate API error: ${error.detail || response.statusText}`);
+  }
+
+  let prediction: ReplicateResponse = await response.json();
+  while (prediction.status === 'starting' || prediction.status === 'processing') {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+      headers: {
+        'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
+      },
+    });
+    if (!pollResponse.ok) {
+      throw new Error('Failed to poll prediction status');
+    }
+    prediction = await pollResponse.json();
+  }
+
+  if (prediction.status === 'failed') {
+    throw new Error(`Music generation failed: ${prediction.error}`);
+  }
+
+  const audioUrl = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;
+  if (!audioUrl) {
+    throw new Error('No audio URL returned from Replicate');
+  }
+  return audioUrl;
+}
+
+export async function generateMusicStableAudio(options: MusicGenerationOptions): Promise<string> {
+  const { prompt, durationSeconds = 90 } = options;
+
+  if (!process.env.IMAGE_AI_API_KEY) {
+    throw new Error('IMAGE_AI_API_KEY is not configured');
+  }
+
+  const modelVersion = process.env.REPLICATE_MUSIC_STABLE_AUDIO_VERSION;
+  if (!modelVersion) {
+    throw new Error('REPLICATE_MUSIC_STABLE_AUDIO_VERSION is not configured');
+  }
+
+  const response = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      version: modelVersion,
+      input: {
+        prompt,
+        duration: durationSeconds,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Replicate API error: ${error.detail || response.statusText}`);
+  }
+
+  let prediction: ReplicateResponse = await response.json();
+  while (prediction.status === 'starting' || prediction.status === 'processing') {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+      headers: {
+        'Authorization': `Token ${process.env.IMAGE_AI_API_KEY}`,
+      },
+    });
+    if (!pollResponse.ok) {
+      throw new Error('Failed to poll prediction status');
+    }
+    prediction = await pollResponse.json();
+  }
+
+  if (prediction.status === 'failed') {
+    throw new Error(`Stable Audio generation failed: ${prediction.error}`);
+  }
+
+  const audioUrl = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;
+  if (!audioUrl) {
+    throw new Error('No audio URL returned from Stable Audio');
+  }
+  return audioUrl;
+}

@@ -1,122 +1,190 @@
 /**
- * RapidAPI TikTok Creative Center API Service
- * Fetches trending products data from RapidAPI and stores images in Wasabi
+ * TikTok Shop RapidAPI Integration - Clean Implementation
+ * Supports both category trends and individual products APIs
  */
 
-import { uploadFromUrl } from '@/lib/services/wasabi';
+// Base URLs for different APIs
+const CATEGORY_API_BASE_URL = 'https://tiktok-creative-center-api.p.rapidapi.com';
+const PRODUCTS_API_BASE_URL = 'https://tiktok-shop-analysis.p.rapidapi.com';
 
-const RAPIDAPI_BASE_URL = 'https://tiktok-creative-center-api.p.rapidapi.com';
-const RAPIDAPI_HOST = 'tiktok-creative-center-api.p.rapidapi.com';
+// Use the products API host for now since we're prioritizing individual products
+const RAPIDAPI_HOST = 'tiktok-shop-analysis.p.rapidapi.com';
+
+// For now, we'll only use the products API since the category API endpoint seems to be unavailable
+// const CATEGORY_API_BASE_URL = PRODUCTS_API_BASE_URL;
 
 export interface RapidAPIFetchOptions {
-  page?: number; // Page number for pagination
-  last?: number; // Number of days to look back (e.g., 7)
-  order_by?: string; // Order by field (e.g., "post", "views", "likes")
-  order_type?: 'asc' | 'desc'; // Order direction
-  country?: string; // Optional country filter (if supported)
-  limit?: number; // Optional limit (if supported)
-}
-
-export interface RapidAPIProductItem {
-  id?: string;
-  productId?: string;
-  name?: string;
-  title?: string;
-  description?: string;
-  seller?: {
-    name?: string;
-    id?: string;
-    username?: string;
-  };
-  advertiser?: {
-    name?: string;
-    id?: string;
-    country?: string;
-  };
-  images?: string[];
-  imageUrls?: string[];
-  thumbnail?: string;
-  cover_url?: string; // Category cover image
-  productUrl?: string;
-  shopUrl?: string;
-  url_title?: string; // Category URL title (e.g., "Perfume", "T-Shirts")
-  metrics?: {
-    views?: number;
-    likes?: number;
-    comments?: number;
-    shares?: number;
-    saves?: number;
-    sales?: number;
-    engagement?: number;
-    impression?: number; // API uses 'impression' instead of 'views'
-    like?: number; // API uses 'like' instead of 'likes'
-    comment?: number; // API uses 'comment' instead of 'comments'
-    share?: number; // API uses 'share' instead of 'shares'
-    post?: number; // Number of posts for this category
-  };
-  // Category hierarchy from API
-  first_ecom_category?: {
-    id?: string;
-    label?: string;
-    value?: string;
-  };
-  second_ecom_category?: {
-    id?: string;
-    label?: string;
-    parent_id?: string;
-    value?: string;
-  };
-  third_ecom_category?: {
-    id?: string;
-    label?: string;
-    parent_id?: string;
-    value?: string;
-  };
-  // Engagement metrics from API
-  impression?: number;
-  like?: number;
-  comment?: number;
-  share?: number;
-  post?: number;
-  post_change?: number;
-  cpa?: number;
-  ctr?: number;
-  cvr?: number;
-  play_six_rate?: number;
-  cost?: number;
-  ecom_type?: string;
-  price?: string;
-  originalPrice?: string;
-  currency?: string;
-  category?: string;
-  tags?: string[];
-  hashtags?: string[];
-  rating?: number;
-  reviewCount?: number;
-  createdAt?: string;
-  updatedAt?: string;
-  [key: string]: any; // Allow additional fields
+  page?: number;
+  last?: number;
+  order_by?: string;
+  order_type?: 'asc' | 'desc';
+  country?: string;
+  limit?: number;
 }
 
 export interface RapidAPIResponse {
+  status?: number;
   code?: number;
   msg?: string;
-  request_id?: string;
   data?: {
-    list?: RapidAPIProductItem[]; // Actual API uses 'list'
+    list?: RapidAPIProductItem[];
     items?: RapidAPIProductItem[];
     products?: RapidAPIProductItem[];
-    pagination?: {
-      page?: number;
-      pageSize?: number;
-      hasMore?: boolean;
-      cursor?: string;
-      total?: number;
-    };
-  };
-  status?: string;
-  message?: string;
+    pagination?: any;
+  } | RapidAPIProductItem[];
 }
+
+// Union type to handle both category data and individual product data
+export type RapidAPIProductItem =
+  // Individual product data (from products API)
+  | {
+      product_id: string;
+      product_name: string;
+      product_name_slug: string;
+      product_trans1?: string;
+      product_trans2?: string;
+      cover_url: string;
+      category: string;
+      categories: string[];
+      region: string;
+      real_price: string;
+      avg_price: string;
+      min_price: string;
+      max_price: string;
+      avg_price_fz: string;
+      min_price_fz: string;
+      max_price_fz: string;
+      sale_props?: Array<{
+        prop_name: string;
+        has_image: boolean;
+        prop_id: string;
+        sale_prop_values: Array<{
+          image?: string;
+          prop_value_id: string;
+          prop_value: string;
+        }>;
+      }>;
+      skus: Record<string, {
+        sku_id: string;
+        sale_prop_value_ids: string;
+        real_price: {
+          price_str: string;
+          price_val: string;
+          currency: string;
+          original_price?: string;
+          price_format: string;
+        };
+        stock: number;
+      }>;
+      specs_count: number;
+      seller: {
+        seller_id: string;
+        seller_name: string;
+        cover_url: string;
+        total_sale_cnt: string;
+        total_sale_gmv_amt: string;
+        total_sale_gmv_amt_fz: string;
+      };
+      commission: string;
+      product_rating: string;
+      review_count: string;
+      influencers_count: number;
+      total_video_cnt: number;
+      total_video_sale_cnt: number;
+      sale_cnt: number;
+      total_sale_cnt: string;
+      total_gmv_amt: string;
+      total_sale_gmv_amt: string;
+      total_gmv_amt_fz: string;
+      total_sale_gmv_amt_fz: string;
+      conversion_rate: string;
+      collect_status: {
+        id: number;
+        name: string;
+        key: string;
+      };
+      is_s_shop: number;
+      is_mall_recommended: number;
+    }
+  // Category trend data (from category API)
+  | {
+      id?: string;
+      productId?: string;
+      name?: string;
+      title?: string;
+      description?: string;
+      seller?: {
+        name?: string;
+        id?: string;
+        username?: string;
+      };
+      advertiser?: {
+        name?: string;
+        id?: string;
+        country?: string;
+      };
+      images?: string[];
+      imageUrls?: string[];
+      thumbnail?: string;
+      cover_url?: string;
+      productUrl?: string;
+      shopUrl?: string;
+      url_title?: string;
+      metrics?: {
+        views?: number;
+        likes?: number;
+        comments?: number;
+        shares?: number;
+        saves?: number;
+        sales?: number;
+        engagement?: number;
+        impression?: number;
+        like?: number;
+        comment?: number;
+        share?: number;
+        post?: number;
+      };
+      first_ecom_category?: {
+        id?: string;
+        label?: string;
+        value?: string;
+      };
+      second_ecom_category?: {
+        id?: string;
+        label?: string;
+        parent_id?: string;
+        value?: string;
+      };
+      third_ecom_category?: {
+        id?: string;
+        label?: string;
+        parent_id?: string;
+        value?: string;
+      };
+      impression?: number;
+      like?: number;
+      comment?: number;
+      share?: number;
+      post?: number;
+      post_change?: number;
+      cpa?: number;
+      ctr?: number;
+      cvr?: number;
+      play_six_rate?: number;
+      cost?: number;
+      ecom_type?: string;
+      price?: string;
+      originalPrice?: string;
+      currency?: string;
+      category?: string;
+      tags?: string[];
+      hashtags?: string[];
+      rating?: number;
+      reviewCount?: number;
+      createdAt?: string;
+      updatedAt?: string;
+      [key: string]: any;
+    };
 
 export interface ProcessedProduct {
   tiktokProductId: string;
@@ -124,22 +192,85 @@ export interface ProcessedProduct {
   description?: string;
   price?: string;
   originalPrice?: string;
-  currency?: string;
+  currency: string;
   tiktokShopUrl: string;
   sellerId?: string;
   sellerName?: string;
   category?: string;
-  images: string[]; // Wasabi URLs
-  totalViews?: number;
-  totalSales?: number;
-  engagementRate?: string;
+  images: string[];
+  totalViews: number;
+  totalSales: number;
+  engagementRate: string;
+  averageRating?: number;
+  totalReviews?: number;
   metadata: any;
 }
 
 /**
- * Fetch trending products from RapidAPI TikTok Creative Center API
+ * Fetch individual products from RapidAPI TikTok Shop Analysis API
  */
-export async function fetchTrendingProducts(
+export async function fetchIndividualProducts(
+  options: {
+    per_page?: number;
+    region?: string;
+  } = {}
+): Promise<{
+  status: number;
+  data: RapidAPIProductItem[];
+}> {
+  const apiKey = process.env.RAPID_API_KEY;
+  if (!apiKey) {
+    throw new Error('RAPID_API_KEY is not configured');
+  }
+
+  const { per_page = 20, region = 'US' } = options;
+
+  // Use the individual products endpoint
+  const url = new URL(`${PRODUCTS_API_BASE_URL}/product/top/trending`);
+  url.searchParams.set('per_page', per_page.toString());
+  url.searchParams.set('region', region);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'X-RapidAPI-Key': apiKey,
+        'X-RapidAPI-Host': RAPIDAPI_HOST,
+      },
+    });
+
+    if (!response.ok) {
+      let errorMessage = `RapidAPI request failed: ${response.status} ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch {
+        const text = await response.text().catch(() => '');
+        if (text) {
+          console.error('RapidAPI error response (text):', text);
+        }
+      }
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+
+    // Transform to consistent format
+    return {
+      status: data.status || 200,
+      data: data.data || [],
+    };
+
+  } catch (error) {
+    console.error('Error fetching individual products:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch trending categories from RapidAPI TikTok Creative Center API
+ */
+export async function fetchTrendingCategories(
   options: RapidAPIFetchOptions = {}
 ): Promise<RapidAPIResponse> {
   const apiKey = process.env.RAPID_API_KEY;
@@ -156,13 +287,13 @@ export async function fetchTrendingProducts(
     limit,
   } = options;
 
-  // Use the actual endpoint: /api/trending/top-products
-  const url = new URL(`${RAPIDAPI_BASE_URL}/api/trending/top-products`);
+  // Use the category trending endpoint
+  const url = new URL(`${CATEGORY_API_BASE_URL}/api/trending/top-products`);
   url.searchParams.set('page', page.toString());
   url.searchParams.set('last', last.toString());
   url.searchParams.set('order_by', order_by);
   url.searchParams.set('order_type', order_type);
-  
+
   // Optional parameters
   if (country) {
     url.searchParams.set('country', country);
@@ -181,55 +312,309 @@ export async function fetchTrendingProducts(
     });
 
     if (!response.ok) {
-      // Try to get error message from response body
       let errorMessage = `RapidAPI request failed: ${response.status} ${response.statusText}`;
       try {
         const errorData = await response.json();
         errorMessage = errorData.message || errorData.error || errorMessage;
-        console.error('RapidAPI error response:', errorData);
       } catch {
-        // If response is not JSON, use status text
         const text = await response.text().catch(() => '');
         if (text) {
           console.error('RapidAPI error response (text):', text);
         }
       }
-      
+
       if (response.status === 429) {
         const retryAfter = response.headers.get('Retry-After');
         throw new Error(
           `Rate limit exceeded. Retry after ${retryAfter || 'some time'} seconds.`
         );
       }
-      
+
       throw new Error(errorMessage);
     }
 
     const data: RapidAPIResponse = await response.json();
-    
-    // Log response structure for debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.log('RapidAPI raw response structure:', {
-        code: data.code,
-        msg: data.msg,
-        hasData: !!data.data,
-        hasList: !!data.data?.list,
-        hasItems: !!data.data?.items,
-        hasProducts: !!data.data?.products,
-        isArray: Array.isArray(data.data),
-        topLevelKeys: Object.keys(data),
-        dataKeys: data.data ? Object.keys(data.data) : [],
-        listCount: data.data?.list?.length || 0,
-      });
-    }
-    
     return data;
+
   } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error('Failed to fetch trending products from RapidAPI');
+    console.error('Error fetching trending categories:', error);
+    throw error;
   }
+}
+
+/**
+ * Fetch trending products using both category trends and individual products APIs
+ * This combines trending category signals with actual product data
+ */
+export async function fetchTrendingProducts(
+  options: RapidAPIFetchOptions = {}
+): Promise<RapidAPIResponse> {
+  try {
+    // For now, prioritize individual products API since it gives us actual product data
+    // In the future, we could use category trends to filter or rank the individual products
+    const individualProductsResponse = await fetchIndividualProducts({
+      per_page: options.limit || 20,
+      region: options.country || 'US',
+    });
+
+    // Transform individual products response to match expected format
+    return {
+      status: individualProductsResponse.status,
+      data: {
+        list: individualProductsResponse.data,
+        items: individualProductsResponse.data,
+        products: individualProductsResponse.data,
+      },
+    };
+
+  } catch (error) {
+    console.error('Error in combined trending products fetch:', error);
+
+    // Fallback to category API if individual products fail
+    console.log('Falling back to category trends API...');
+    return await fetchTrendingCategories(options);
+  }
+}
+
+/**
+ * Process RapidAPI product item into our standardized format
+ */
+export async function mapRapidAPIResponseToProduct(
+  item: RapidAPIProductItem
+): Promise<ProcessedProduct | null> {
+  // Check if this is individual product data (has product_id) or category data
+  const isIndividualProduct = 'product_id' in item;
+
+  if (isIndividualProduct) {
+    // Process individual product data
+    const productItem = item as Extract<RapidAPIProductItem, { product_id: string }>;
+    return await processIndividualProduct(productItem);
+  } else {
+    // Process category trend data
+    const categoryItem = item as Extract<RapidAPIProductItem, { url_title?: string }>;
+    return await processCategoryTrend(categoryItem);
+  }
+}
+
+async function processIndividualProduct(
+  item: Extract<RapidAPIProductItem, { product_id: string }>
+): Promise<ProcessedProduct | null> {
+  const tiktokProductId = item.product_id;
+
+  if (!tiktokProductId) {
+    console.warn('Skipping product - no product ID found:', item);
+    return null;
+  }
+
+  // Extract image URLs (mainly cover_url for now)
+  const originalImageUrls = [item.cover_url].filter(Boolean);
+
+  // Download and store images in Wasabi
+  const { wasabiUrls, failed } = await downloadAndStoreImages(originalImageUrls, tiktokProductId);
+
+  // Calculate engagement metrics from available data
+  const totalVideos = item.total_video_cnt || 0;
+  const totalSales = parseInt(item.total_sale_cnt.replace(/,/g, '')) || 0;
+  const totalVideoSales = item.total_video_sale_cnt || 0;
+
+  // Use video count as a proxy for engagement/views
+  const totalViews = totalVideos * 1000; // Rough estimate
+  const engagementRate = totalSales > 0 && totalViews > 0
+    ? (totalVideoSales / totalViews).toFixed(4)
+    : '0';
+
+  // Build TikTok Shop product URL
+  const tiktokShopUrl = `https://shop.tiktok.com/product/${tiktokProductId}`;
+
+  // Parse pricing information - handle API quirks with "?" characters
+  let price: string | undefined;
+
+  // Try to extract clean price from real_price first
+  const realPriceMatch = item.real_price?.match(/\$?([\d,]+\.?\d*)/);
+  if (realPriceMatch && realPriceMatch[1] && !realPriceMatch[1].includes('?')) {
+    price = parseFloat(realPriceMatch[1].replace(/,/g, '')).toFixed(2);
+  }
+
+  // Fallback to avg_price if real_price is malformed
+  if (!price && item.avg_price) {
+    const avgPriceMatch = item.avg_price.match(/\$?([\d,]+\.?\d*)/);
+    if (avgPriceMatch && avgPriceMatch[1] && !avgPriceMatch[1].includes('?')) {
+      price = parseFloat(avgPriceMatch[1].replace(/,/g, '')).toFixed(2);
+    }
+  }
+
+  // Last resort: try to get price from first SKU
+  if (!price && item.skus) {
+    const firstSkuKey = Object.keys(item.skus)[0];
+    const firstSku = item.skus[firstSkuKey];
+    if (firstSku?.real_price?.price_val && !firstSku.real_price.price_val.includes('?')) {
+      const skuPriceMatch = firstSku.real_price.price_val.match(/([\d,]+\.?\d*)/);
+      if (skuPriceMatch) {
+        price = parseFloat(skuPriceMatch[1].replace(/,/g, '')).toFixed(2);
+      }
+    }
+  }
+
+  // Store original data in metadata
+  const metadata = {
+    ...item,
+    originalImageUrls,
+    imageUploadFailed: failed,
+    rapidapiSource: true,
+    isIndividualProduct: true,
+    fetchedAt: new Date().toISOString(),
+  };
+
+  return {
+    tiktokProductId,
+    name: item.product_name,
+    description: item.product_trans1 || item.product_name,
+    price,
+    originalPrice: undefined,
+    currency: 'USD',
+    tiktokShopUrl,
+    sellerId: item.seller.seller_id,
+    sellerName: item.seller.seller_name,
+    category: item.category,
+    images: wasabiUrls,
+    totalViews,
+    totalSales,
+    engagementRate,
+    averageRating: item.product_rating ? parseFloat(item.product_rating) : undefined,
+    totalReviews: item.review_count ? parseInt(item.review_count.replace(/,/g, '')) : 0,
+    metadata,
+  };
+}
+
+async function processCategoryTrend(
+  item: Extract<RapidAPIProductItem, { url_title?: string }>
+): Promise<ProcessedProduct | null> {
+  // Extract TikTok product ID - generate unique ID from category hierarchy
+  const tiktokProductId = extractTikTokProductId(item);
+
+  if (!tiktokProductId) {
+    console.warn('Could not generate product ID for category trend:', item);
+    return null;
+  }
+
+  // Extract image URLs from the category item
+  const originalImageUrls = extractImageUrls(item);
+
+  // Download and store images in Wasabi
+  const { wasabiUrls, failed } = await downloadAndStoreImages(originalImageUrls, tiktokProductId);
+
+  // Calculate engagement rate from category metrics
+  const views = item.impression || 0;
+  const likes = item.like || 0;
+  const comments = item.comment || 0;
+  const shares = item.share || 0;
+  const engagementRate = views > 0
+    ? ((likes + comments + shares) / views).toFixed(4)
+    : '0';
+
+  // Build TikTok Shop URL for category search
+  const categoryName = item.url_title || item.third_ecom_category?.value || item.second_ecom_category?.value || item.first_ecom_category?.value;
+  const tiktokShopUrl = categoryName
+    ? `https://shop.tiktok.com/s?q=${encodeURIComponent(categoryName)}`
+    : 'https://shop.tiktok.com';
+
+  // Parse pricing information (category data might not have prices)
+  const priceMatch = item.price?.match(/\$?([\d,]+\.?\d*)/);
+  const price = priceMatch ? priceMatch[1].replace(/,/g, '') : undefined;
+
+  // Store original data in metadata
+  const metadata = {
+    ...item,
+    originalImageUrls,
+    imageUploadFailed: failed,
+    rapidapiSource: true,
+    isCategoryTrend: true,
+    fetchedAt: new Date().toISOString(),
+  };
+
+  // Determine product name - use category hierarchy
+  const productName = item.third_ecom_category?.value ||
+    item.second_ecom_category?.value ||
+    item.first_ecom_category?.value ||
+    item.url_title ||
+    'Trending Category';
+
+  // Determine category
+  const productCategory = item.third_ecom_category?.value ||
+    item.second_ecom_category?.value ||
+    item.first_ecom_category?.value ||
+    undefined;
+
+  // Use post count as sales proxy for trending categories
+  const sales = item.post || 0;
+
+  return {
+    tiktokProductId,
+    name: `Trending: ${productName}`,
+    description: `Trending ${productCategory || 'category'} with ${sales} posts, ${views.toLocaleString()} views, and ${(parseFloat(engagementRate) * 100).toFixed(1)}% engagement rate`,
+    price,
+    originalPrice: undefined,
+    currency: 'USD',
+    tiktokShopUrl,
+    sellerId: undefined,
+    sellerName: 'TikTok Shop Trends',
+    category: productCategory,
+    images: wasabiUrls,
+    totalViews: views,
+    totalSales: sales,
+    engagementRate,
+    metadata,
+  };
+}
+
+/**
+ * Extract TikTok product ID from RapidAPI response
+ */
+function extractTikTokProductId(item: RapidAPIProductItem): string | null {
+  // The new API provides product_id directly
+  return item.product_id || null;
+}
+
+/**
+ * Extract image URLs from RapidAPI product item
+ */
+function extractImageUrls(item: RapidAPIProductItem): string[] {
+  const imageUrls: string[] = [];
+
+  // Primary image: cover_url (main product image)
+  if (item.cover_url) {
+    imageUrls.push(item.cover_url);
+  }
+
+  // Extract from sale props (variant images)
+  if ('sale_props' in item && item.sale_props && Array.isArray(item.sale_props)) {
+    item.sale_props.forEach(prop => {
+      if (prop.sale_prop_values && Array.isArray(prop.sale_prop_values)) {
+        prop.sale_prop_values.forEach((value: { image?: string }) => {
+          if (value.image && value.image !== '') {
+            imageUrls.push(value.image);
+          }
+        });
+      }
+    });
+  }
+
+  // Seller cover image as fallback
+  if ('seller' in item && item.seller && 'cover_url' in item.seller && item.seller.cover_url) {
+    imageUrls.push(item.seller.cover_url);
+  }
+
+  // Remove duplicates and filter out empty/invalid URLs
+  return [...new Set(imageUrls)]
+    .filter(url => url && typeof url === 'string' && url.trim() !== '')
+    .filter(url => {
+      try {
+        new URL(url);
+        return true;
+      } catch {
+        return false;
+      }
+    });
 }
 
 /**
@@ -251,314 +636,42 @@ export async function downloadAndStoreImages(
   const batchSize = 5;
   for (let i = 0; i < imageUrls.length; i += batchSize) {
     const batch = imageUrls.slice(i, i + batchSize);
-    
+
     const uploadPromises = batch.map(async (imageUrl, index) => {
       try {
         // Extract filename from URL or generate one
         const urlPath = new URL(imageUrl).pathname;
         const originalFileName = urlPath.split('/').pop() || `image-${i + index}.jpg`;
-        const fileName = originalFileName.includes('.') 
-          ? originalFileName 
-          : `${originalFileName}.jpg`;
 
-        const uploadResult = await uploadFromUrl(imageUrl, {
-          folder: `tiktok-shop/products/${productId}/images/`,
-          fileName,
-          contentType: 'image/jpeg',
-          metadata: {
-            source: 'rapidapi_seed',
-            originalUrl: imageUrl,
-            productId: productId,
-          },
-          fetchHeaders: {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
-            'Referer': 'https://tiktok.com',
-          },
-        });
+        // Generate unique filename
+        const fileExtension = originalFileName.split('.').pop() || 'jpg';
+        const uniqueFileName = `${productId}_${i + index}.${fileExtension}`;
 
-        return uploadResult.url;
+        // Download and upload to Wasabi
+        const { uploadFromUrl } = await import('@/lib/services/wasabi');
+        const wasabiUrl = await uploadFromUrl(imageUrl, { fileName: `tiktok-shop/products/${productId}/images/${uniqueFileName}` });
+
+        if (wasabiUrl) {
+          wasabiUrls.push(wasabiUrl.url);
+        } else {
+          failed++;
+        }
       } catch (error) {
-        console.error(`Failed to upload image ${imageUrl} for product ${productId}:`, error);
+        console.error(`Failed to upload image ${imageUrl}:`, error);
         failed++;
-        return null;
       }
     });
 
-    const results = await Promise.all(uploadPromises);
-    wasabiUrls.push(...results.filter((url): url is string => url !== null));
+    // Wait for batch to complete
+    await Promise.allSettled(uploadPromises);
+
+    // Small delay between batches
+    if (i + batchSize < imageUrls.length) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
   }
 
   return { wasabiUrls, failed };
-}
-
-/**
- * Extract image URLs from RapidAPI product item
- */
-function extractImageUrls(item: RapidAPIProductItem): string[] {
-  const imageUrls: string[] = [];
-
-  // Extract from direct image fields (most common for products)
-  if (item.images && Array.isArray(item.images)) {
-    imageUrls.push(...item.images);
-  }
-  if (item.imageUrls && Array.isArray(item.imageUrls)) {
-    imageUrls.push(...item.imageUrls);
-  }
-  if (item.thumbnail) {
-    imageUrls.push(item.thumbnail);
-  }
-  
-  // Category cover image (for category-based data)
-  if (item.cover_url) {
-    imageUrls.push(item.cover_url);
-  }
-
-  // Extract from creative object (fallback for ads-based responses)
-  if (item.creative) {
-    if (item.creative.thumbnail) {
-      imageUrls.push(item.creative.thumbnail);
-    }
-    if (item.creative.imageUrl) {
-      imageUrls.push(item.creative.imageUrl);
-    }
-    if (item.creative.url && item.creative.type === 'image') {
-      imageUrls.push(item.creative.url);
-    }
-  }
-
-  // Remove duplicates
-  return [...new Set(imageUrls.filter(Boolean))];
-}
-
-/**
- * Extract TikTok product ID from RapidAPI response
- * For category-based data, generates a unique ID from category hierarchy
- */
-function extractTikTokProductId(item: RapidAPIProductItem): string | null {
-  // Try various fields that might contain the TikTok product ID
-  const possibleIds = [
-    item.productId,
-    item.id,
-    item.metadata?.productId,
-    item.metadata?.tiktokProductId,
-    item.metadata?.id,
-    // Extract from product URL if available
-    item.productUrl ? extractIdFromUrl(item.productUrl) : null,
-    item.shopUrl ? extractIdFromUrl(item.shopUrl) : null,
-  ].filter(Boolean) as string[];
-
-  // Return the first valid ID found
-  if (possibleIds.length > 0) {
-    return possibleIds[0];
-  }
-
-  // For category-based data (trending categories), generate ID from category hierarchy
-  // This creates a unique identifier based on the category structure
-  const firstCatId = item.first_ecom_category?.id;
-  const secondCatId = item.second_ecom_category?.id;
-  const thirdCatId = item.third_ecom_category?.id;
-  
-  if (firstCatId || secondCatId || thirdCatId) {
-    const categoryIds = [firstCatId, secondCatId, thirdCatId].filter(Boolean) as string[];
-    
-    if (categoryIds.length > 0) {
-      // Create a unique ID from category hierarchy + url_title if available
-      const baseId = categoryIds.join('_');
-      const urlTitle = item.url_title ? `_${item.url_title.replace(/[^a-zA-Z0-9]/g, '-')}` : '';
-      const generatedId = `category_${baseId}${urlTitle}`;
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Generated category ID:', generatedId, 'from categories:', { firstCatId, secondCatId, thirdCatId, urlTitle: item.url_title });
-      }
-      
-      return generatedId;
-    }
-  }
-
-  // Last resort: use url_title if available (for category-based entries)
-  if (item.url_title) {
-    // Create a hash-based ID from url_title and category
-    const categoryId = thirdCatId || secondCatId || firstCatId || 'unknown';
-    const generatedId = `trending_${categoryId}_${item.url_title.replace(/[^a-zA-Z0-9]/g, '-')}`;
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Generated trending ID from url_title:', generatedId);
-    }
-    
-    return generatedId;
-  }
-
-  if (process.env.NODE_ENV === 'development') {
-    console.warn('Could not generate product ID. Item structure:', {
-      hasFirstCat: !!firstCatId,
-      hasSecondCat: !!secondCatId,
-      hasThirdCat: !!thirdCatId,
-      hasUrlTitle: !!item.url_title,
-      keys: Object.keys(item),
-    });
-  }
-
-  return null;
-}
-
-/**
- * Extract product ID from TikTok Shop URL
- */
-function extractIdFromUrl(url: string): string | null {
-  try {
-    const urlObj = new URL(url);
-    // Common patterns in TikTok Shop URLs:
-    // - /product/{id}
-    // - /shop/product/{id}
-    // - ?product_id={id}
-    // - /item/{id}
-    
-    const pathMatch = urlObj.pathname.match(/\/(?:product|item)\/([^\/\?]+)/);
-    if (pathMatch) {
-      return pathMatch[1];
-    }
-
-    const queryMatch = urlObj.searchParams.get('product_id') || urlObj.searchParams.get('id');
-    if (queryMatch) {
-      return queryMatch;
-    }
-
-    // Try to extract any numeric/alphanumeric ID from path
-    const pathParts = urlObj.pathname.split('/').filter(Boolean);
-    const lastPart = pathParts[pathParts.length - 1];
-    if (lastPart && /^[a-zA-Z0-9_-]+$/.test(lastPart) && lastPart.length > 5) {
-      return lastPart;
-    }
-  } catch {
-    // Invalid URL, return null
-  }
-
-  return null;
-}
-
-/**
- * Map RapidAPI product item to product data structure
- * This function processes the product and downloads images to Wasabi
- */
-export async function mapRapidAPIResponseToProduct(
-  item: RapidAPIProductItem
-): Promise<ProcessedProduct | null> {
-  // Extract TikTok product ID - this is critical for duplicate prevention
-  const tiktokProductId = extractTikTokProductId(item);
-  
-  // If we can't find a valid TikTok product ID, skip this product
-  if (!tiktokProductId) {
-    console.warn('Skipping product - no valid TikTok product ID found:', item);
-    return null;
-  }
-
-  // Extract image URLs from the product item
-  const originalImageUrls = extractImageUrls(item);
-
-  // Download and store images in Wasabi
-  const { wasabiUrls, failed } = await downloadAndStoreImages(originalImageUrls, tiktokProductId);
-
-  // Calculate engagement rate
-  // Handle both metrics object and direct fields (API uses direct fields)
-  const views = item.metrics?.views || item.metrics?.impression || item.impression || 0;
-  const likes = item.metrics?.likes || item.metrics?.like || item.like || 0;
-  const comments = item.metrics?.comments || item.metrics?.comment || item.comment || 0;
-  const shares = item.metrics?.shares || item.metrics?.share || item.share || 0;
-  const engagementRate = views > 0 
-    ? ((likes + comments + shares) / views).toFixed(4)
-    : '0';
-
-  // Extract price if available
-  let price: string | undefined;
-  let originalPrice: string | undefined;
-  let currency = item.currency || 'USD';
-  
-  if (item.price) {
-    // If price is already a string with currency, parse it
-    if (typeof item.price === 'string') {
-      const priceMatch = item.price.match(/([\d,]+\.?\d*)/);
-      if (priceMatch) {
-        price = priceMatch[1].replace(/,/g, '');
-      }
-      // Try to extract currency
-      const currencyMatch = item.price.match(/[A-Z]{3}/);
-      if (currencyMatch) {
-        currency = currencyMatch[0];
-      }
-    } else {
-      price = item.price.toString();
-    }
-  }
-  
-  if (item.originalPrice) {
-    if (typeof item.originalPrice === 'string') {
-      const priceMatch = item.originalPrice.match(/([\d,]+\.?\d*)/);
-      if (priceMatch) {
-        originalPrice = priceMatch[1].replace(/,/g, '');
-      }
-    } else {
-      originalPrice = item.originalPrice.toString();
-    }
-  }
-
-  // Build TikTok Shop URL
-  // For category-based data, create a search URL
-  const categoryName = item.url_title || item.third_ecom_category?.value || item.second_ecom_category?.value || item.first_ecom_category?.value;
-  const tiktokShopUrl = item.productUrl || 
-    item.shopUrl || 
-    item.creative?.url || 
-    (categoryName 
-      ? `https://www.tiktok.com/shop/search?q=${encodeURIComponent(categoryName)}`
-      : `https://www.tiktok.com/shop/product/${tiktokProductId}`);
-
-  // Store original image URLs in metadata for reference
-  const metadata = {
-    ...item,
-    originalImageUrls,
-    imageUploadFailed: failed,
-    rapidapiSource: true,
-    fetchedAt: new Date().toISOString(),
-  };
-
-  // Determine product name - use category name for category-based data
-  const productName = item.name || 
-    item.title || 
-    item.third_ecom_category?.value || 
-    item.second_ecom_category?.value || 
-    item.first_ecom_category?.value ||
-    item.url_title ||
-    item.description || 
-    'Untitled Product';
-
-  // Determine category - use the most specific category
-  const productCategory = item.third_ecom_category?.value || 
-    item.second_ecom_category?.value || 
-    item.first_ecom_category?.value ||
-    item.category || 
-    item.tags?.[0] || 
-    undefined;
-
-  // For category-based data, use post count as a proxy for "sales" (number of product posts)
-  const sales = item.metrics?.sales || item.post || 0;
-
-  return {
-    tiktokProductId,
-    name: productName,
-    description: item.description || `Trending ${productCategory || 'product'} category with ${sales} posts`,
-    price,
-    originalPrice,
-    currency,
-    tiktokShopUrl,
-    sellerId: item.seller?.id || item.advertiser?.id,
-    sellerName: item.seller?.name || item.advertiser?.name,
-    category: productCategory,
-    images: wasabiUrls, // Store Wasabi URLs
-    totalViews: views,
-    totalSales: sales,
-    engagementRate,
-    metadata,
-  };
 }
 
 /**
@@ -580,15 +693,15 @@ export async function processRapidAPIProducts(
   for (const item of items) {
     try {
       const product = await mapRapidAPIResponseToProduct(item);
-      
-      // Skip if product ID extraction failed
+
+      // Skip if processing failed
       if (!product) {
         skipped++;
         continue;
       }
-      
+
       products.push(product);
-      
+
       // Count images
       totalImagesUploaded += product.images.length;
       const failed = product.metadata?.imageUploadFailed || 0;
@@ -607,11 +720,3 @@ export async function processRapidAPIProducts(
     skipped,
   };
 }
-
-// Deprecated: Use fetchTrendingProducts instead
-/** @deprecated Use fetchTrendingProducts instead */
-export const fetchTrendingAds = fetchTrendingProducts;
-
-// Deprecated: Use processRapidAPIProducts instead
-/** @deprecated Use processRapidAPIProducts instead */
-export const processRapidAPIAds = processRapidAPIProducts;

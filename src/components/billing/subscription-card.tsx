@@ -23,9 +23,9 @@ interface SubscriptionCardProps {
 export function SubscriptionCard({ subscription, plan, onManageClick }: SubscriptionCardProps) {
   if (!subscription || !plan) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="text-lg font-semibold text-gray-900">Subscription</h3>
-        <p className="mt-2 text-sm text-gray-600">No active subscription</p>
+      <div className="rounded-lg border border-border bg-surface p-6">
+        <h3 className="text-lg font-semibold text-foreground">Subscription</h3>
+        <p className="mt-2 text-sm text-muted">No active subscription</p>
         <Button className="mt-4" onClick={onManageClick}>
           Subscribe to a plan
         </Button>
@@ -42,17 +42,17 @@ export function SubscriptionCard({ subscription, plan, onManageClick }: Subscrip
 
   const statusColors: Record<string, string> = {
     active: 'bg-green-100 text-green-800',
-    trialing: 'bg-blue-100 text-blue-800',
+    trialing: 'bg-brand-100 text-brand-700',
     past_due: 'bg-yellow-100 text-yellow-800',
-    canceled: 'bg-gray-100 text-gray-800',
+    canceled: 'bg-surface-alt text-muted',
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6">
+    <div className="rounded-lg border border-border bg-surface p-6">
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Current Plan</h3>
-          <p className="mt-1 text-2xl font-bold text-gray-900">{plan.name}</p>
+          <h3 className="text-lg font-semibold text-foreground">Current Plan</h3>
+          <p className="mt-1 text-2xl font-bold text-foreground">{plan.name}</p>
           <span
             className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-semibold ${
               statusColors[subscription.status] || statusColors.canceled
@@ -63,15 +63,15 @@ export function SubscriptionCard({ subscription, plan, onManageClick }: Subscrip
         </div>
         {plan.monthlyPrice && (
           <div className="text-right">
-            <p className="text-2xl font-bold text-gray-900">${plan.monthlyPrice}</p>
-            <p className="text-sm text-gray-600">per month</p>
+            <p className="text-2xl font-bold text-foreground">${plan.monthlyPrice}</p>
+            <p className="text-sm text-muted">per month</p>
           </div>
         )}
       </div>
 
       {periodEnd && (
-        <div className="mt-4 border-t border-gray-200 pt-4">
-          <p className="text-sm text-gray-600">
+        <div className="mt-4 border-t border-border pt-4">
+          <p className="text-sm text-muted">
             {subscription.cancelAtPeriodEnd
               ? `Cancels on ${periodEnd.toLocaleDateString()}`
               : `Renews on ${periodEnd.toLocaleDateString()}`}

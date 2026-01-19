@@ -107,15 +107,15 @@ export function OrganizationDetail({ organizationId, userRole, userId }: Organiz
   const getRoleBadge = (role: string) => {
     const colors = {
       owner: 'bg-purple-100 text-purple-800',
-      admin: 'bg-blue-100 text-blue-800',
-      member: 'bg-gray-100 text-gray-800',
+      admin: 'bg-brand-100 text-brand-700',
+      member: 'bg-surface-alt text-muted',
     };
     return colors[role as keyof typeof colors] || colors.member;
   };
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-white">
+      <div className="flex h-64 items-center justify-center rounded-lg border border-border bg-surface">
         <Loading size="lg" text="Loading organization..." />
       </div>
     );
@@ -123,8 +123,8 @@ export function OrganizationDetail({ organizationId, userRole, userId }: Organiz
 
   if (!orgData) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-        <p className="text-gray-600">Organization not found</p>
+      <div className="rounded-lg border border-border bg-surface p-12 text-center">
+        <p className="text-muted">Organization not found</p>
       </div>
     );
   }
@@ -134,14 +134,14 @@ export function OrganizationDetail({ organizationId, userRole, userId }: Organiz
   return (
     <div className="space-y-6">
       {/* Organization Info */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
+      <div className="rounded-lg border border-border bg-surface p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900">{organization.name}</h3>
-            <p className="mt-1 text-sm text-gray-600">
+            <h3 className="text-lg font-semibold text-foreground">{organization.name}</h3>
+            <p className="mt-1 text-sm text-muted">
               Slug: <span className="font-mono">{organization.slug}</span>
             </p>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-sm text-muted">
               Created: {new Date(organization.createdAt).toLocaleDateString()}
             </p>
           </div>
@@ -154,9 +154,9 @@ export function OrganizationDetail({ organizationId, userRole, userId }: Organiz
       </div>
 
       {/* Members Section */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
+      <div className="rounded-lg border border-border bg-surface p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Members</h3>
+          <h3 className="text-lg font-semibold text-foreground">Members</h3>
           {isAdmin && (
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={() => setIsInviteModalOpen(true)}>
@@ -386,11 +386,11 @@ export function OrganizationDetail({ organizationId, userRole, userId }: Organiz
             autoFocus
           />
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-1">Role</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Role</label>
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as 'admin' | 'member')}
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="block w-full rounded-xl border border-border px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
             >
               <option value="member">Member</option>
               <option value="admin">Admin</option>
@@ -410,7 +410,7 @@ export function OrganizationDetail({ organizationId, userRole, userId }: Organiz
 
       {/* Add Member Modal - Simplified version (would need user search in real app) */}
       <Modal isOpen={isAddMemberModalOpen} onClose={() => setIsAddMemberModalOpen(false)} title="Add Member">
-        <p className="mb-4 text-sm text-gray-600">
+        <p className="mb-4 text-sm text-muted">
           To add a member directly, you need their user ID. For most cases, use invitations instead.
         </p>
         <div className="flex justify-end">

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Loading } from '@/components/ui/loading';
-import { useGenerateStoryboards } from '@/hooks/use-projects';
+import { useGenerateConcepts } from '@/hooks/use-projects';
 
 type AdStyle = 'conversational' | 'energetic' | 'professional' | 'casual' | 'sex_appeal';
 type AspectRatio = 'portrait' | 'landscape' | 'square';
@@ -46,7 +46,7 @@ export function StyleStep({ projectId, onNext }: StyleStepProps) {
   const [selectedStyle, setSelectedStyle] = useState<AdStyle | null>(null);
   const [duration, setDuration] = useState(30);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('portrait');
-  const generateStoryboards = useGenerateStoryboards(projectId);
+  const generateConcepts = useGenerateConcepts(projectId);
 
   const handleGenerate = async () => {
     if (!selectedStyle) {
@@ -55,28 +55,28 @@ export function StyleStep({ projectId, onNext }: StyleStepProps) {
     }
 
     try {
-      await generateStoryboards.mutateAsync({
+      await generateConcepts.mutateAsync({
         style: selectedStyle,
         duration,
         aspectRatio,
       });
-      toast.success('Storyboards generated successfully!');
+      toast.success('Concepts generated successfully!');
       onNext();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to generate storyboards');
+      toast.error(error instanceof Error ? error.message : 'Failed to generate concepts');
     }
   };
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-900">Choose Your Style</h2>
-      <p className="mt-2 text-gray-600">
-        Select an advertisement style, duration, and aspect ratio. We'll generate 3 storyboards for you to choose from.
+      <h2 className="text-2xl font-bold text-foreground">Choose Your Style</h2>
+      <p className="mt-2 text-muted">
+        Select an advertisement style, duration, and aspect ratio. We'll generate 3 concepts for you to choose from.
       </p>
 
       <div className="mt-6 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-4">
+          <label className="mb-4 block text-sm font-medium text-foreground">
             Advertisement Style
           </label>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -84,22 +84,22 @@ export function StyleStep({ projectId, onNext }: StyleStepProps) {
               <button
                 key={style.id}
                 onClick={() => setSelectedStyle(style.id)}
-                disabled={generateStoryboards.isPending}
+                disabled={generateConcepts.isPending}
                 className={`rounded-lg border-2 p-4 text-left transition-colors ${
                   selectedStyle === style.id
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
-                } ${generateStoryboards.isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    ? 'border-brand bg-brand-50'
+                    : 'border-border bg-white hover:border-border-strong'
+                } ${generateConcepts.isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                <h3 className="text-lg font-semibold text-gray-900">{style.name}</h3>
-                <p className="mt-1 text-sm text-gray-600">{style.description}</p>
+                <h3 className="text-lg font-semibold text-foreground">{style.name}</h3>
+                <p className="mt-1 text-sm text-muted">{style.description}</p>
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-4">
+          <label className="mb-4 block text-sm font-medium text-foreground">
             Duration
           </label>
           <div className="grid grid-cols-3 gap-3">
@@ -107,21 +107,21 @@ export function StyleStep({ projectId, onNext }: StyleStepProps) {
               <button
                 key={seconds}
                 onClick={() => setDuration(seconds)}
-                disabled={generateStoryboards.isPending}
+                disabled={generateConcepts.isPending}
                 className={`rounded-lg border-2 p-4 text-center transition-colors ${
                   duration === seconds
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
-                } ${generateStoryboards.isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    ? 'border-brand bg-brand-50'
+                    : 'border-border bg-white hover:border-border-strong'
+                } ${generateConcepts.isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                <h3 className="text-lg font-semibold text-gray-900">{seconds}s</h3>
+                <h3 className="text-lg font-semibold text-foreground">{seconds}s</h3>
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-4">
+          <label className="mb-4 block text-sm font-medium text-foreground">
             Aspect Ratio
           </label>
           <div className="grid grid-cols-3 gap-3">
@@ -133,30 +133,30 @@ export function StyleStep({ projectId, onNext }: StyleStepProps) {
               <button
                 key={ratio.id}
                 onClick={() => setAspectRatio(ratio.id)}
-                disabled={generateStoryboards.isPending}
+                disabled={generateConcepts.isPending}
                 className={`rounded-lg border-2 p-4 text-center transition-colors ${
                   aspectRatio === ratio.id
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
-                } ${generateStoryboards.isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    ? 'border-brand bg-brand-50'
+                    : 'border-border bg-white hover:border-border-strong'
+                } ${generateConcepts.isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                <h3 className="text-lg font-semibold text-gray-900">{ratio.name}</h3>
-                <p className="mt-1 text-sm text-gray-600">{ratio.ratio}</p>
+                <h3 className="text-lg font-semibold text-foreground">{ratio.name}</h3>
+                <p className="mt-1 text-sm text-muted">{ratio.ratio}</p>
               </button>
             ))}
           </div>
         </div>
 
-        {generateStoryboards.isPending && (
+        {generateConcepts.isPending && (
           <div className="flex flex-col items-center justify-center py-12">
-            <Loading size="lg" text="Generating storyboards..." />
-            <p className="mt-4 text-sm text-gray-500">
-              This may take a few minutes. We're creating 3 unique storyboards with scripts, scenes, and preview images.
+            <Loading size="lg" text="Generating concepts..." />
+            <p className="mt-4 text-sm text-subtle">
+              This may take a few minutes. We're creating 3 unique concepts with scripts, scenes, and preview images.
             </p>
           </div>
         )}
 
-        {!generateStoryboards.isPending && (
+        {!generateConcepts.isPending && (
           <div className="flex gap-3">
             <Button
               onClick={handleGenerate}
@@ -164,7 +164,7 @@ export function StyleStep({ projectId, onNext }: StyleStepProps) {
               size="lg"
               className="w-full sm:w-auto"
             >
-              Generate Storyboards
+              Generate Concepts
             </Button>
           </div>
         )}

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { BillingSettingsClient } from '@/components/billing/billing-settings-client';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { needsOnboarding } from '@/lib/db-queries';
+import { isSuperAdmin } from '@/lib/admin-utils';
 
 export default async function BillingSettingsPage() {
   const session = await auth();
@@ -17,6 +18,7 @@ export default async function BillingSettingsPage() {
   }
 
   const organizationId = session.user?.activeOrganizationId || undefined;
+  const userIsSuperAdmin = isSuperAdmin(session.user?.email);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -25,6 +27,7 @@ export default async function BillingSettingsPage() {
         userName={session.user?.name || undefined}
         userImage={session.user?.image || null}
         activeOrganizationId={session.user?.activeOrganizationId || null}
+        isSuperAdmin={userIsSuperAdmin}
       />
       <BillingSettingsClient organizationId={organizationId} />
     </div>

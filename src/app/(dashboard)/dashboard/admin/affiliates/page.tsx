@@ -3,14 +3,7 @@ import { redirect } from 'next/navigation';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { AdminAffiliatesClient } from '@/components/dashboard/admin-affiliates-client';
 import { needsOnboarding } from '@/lib/db-queries';
-
-// Super admin emails (comma-separated) from environment variable
-const SUPER_ADMIN_EMAILS = process.env.SUPER_ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) || [];
-
-function isSuperAdmin(email: string | null | undefined): boolean {
-  if (!email) return false;
-  return SUPER_ADMIN_EMAILS.includes(email.toLowerCase());
-}
+import { isSuperAdmin } from '@/lib/admin-utils';
 
 export default async function AdminAffiliatesPage() {
   const session = await auth();
@@ -36,6 +29,7 @@ export default async function AdminAffiliatesPage() {
         userName={session.user?.name || undefined}
         userImage={session.user?.image || null}
         activeOrganizationId={session.user?.activeOrganizationId || null}
+        isSuperAdmin={true}
       />
       <AdminAffiliatesClient />
     </div>

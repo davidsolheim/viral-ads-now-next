@@ -20,34 +20,33 @@ const legalLinks = [
 
 export function MarketingFooter() {
   return (
-    <footer className="border-t border-gray-200 bg-white">
+    <footer className="border-t border-border bg-surface">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-8 md:grid-cols-4">
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-lg font-semibold text-gray-900">
+            <div className="flex items-center">
               <Image
-                src="/viral-ads-now-icon.png"
+                src="/banner.svg"
                 alt="Viral Ads Now"
-                width={36}
+                width={120}
                 height={36}
-                className="h-9 w-9 rounded-xl"
+                className="h-9 w-auto rounded-xl"
               />
-              Viral Ads Now
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted">
               Create TikTok-ready video ads from product links in minutes.
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-subtle">
               Focused on TikTok. More channels coming soon.
             </p>
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-gray-900">Product</p>
-            <ul className="mt-3 space-y-2 text-sm text-gray-600">
+            <p className="text-sm font-semibold text-foreground">Product</p>
+            <ul className="mt-3 space-y-2 text-sm text-muted">
               {productLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="hover:text-blue-600">
+                  <Link href={link.href} className="transition-colors hover:text-brand">
                     {link.label}
                   </Link>
                 </li>
@@ -56,11 +55,11 @@ export function MarketingFooter() {
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-gray-900">Company</p>
-            <ul className="mt-3 space-y-2 text-sm text-gray-600">
+            <p className="text-sm font-semibold text-foreground">Company</p>
+            <ul className="mt-3 space-y-2 text-sm text-muted">
               {companyLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="hover:text-blue-600">
+                  <Link href={link.href} className="transition-colors hover:text-brand">
                     {link.label}
                   </Link>
                 </li>
@@ -69,17 +68,17 @@ export function MarketingFooter() {
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-gray-900">Legal</p>
-            <ul className="mt-3 space-y-2 text-sm text-gray-600">
+            <p className="text-sm font-semibold text-foreground">Legal</p>
+            <ul className="mt-3 space-y-2 text-sm text-muted">
               {legalLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="hover:text-blue-600">
+                  <Link href={link.href} className="transition-colors hover:text-brand">
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
-            <p className="mt-6 text-xs text-gray-500">© 2026 Viral Ads Now. All rights reserved.</p>
+            <p className="mt-6 text-xs text-subtle">© 2026 Viral Ads Now. All rights reserved.</p>
           </div>
         </div>
       </div>

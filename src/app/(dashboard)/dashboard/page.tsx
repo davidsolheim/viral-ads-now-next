@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { DashboardClient } from '@/components/dashboard/dashboard-client';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { needsOnboarding } from '@/lib/db-queries';
+import { isSuperAdmin } from '@/lib/admin-utils';
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -16,6 +17,8 @@ export default async function DashboardPage() {
     redirect('/onboarding');
   }
 
+  const userIsSuperAdmin = isSuperAdmin(session.user?.email);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader
@@ -23,6 +26,7 @@ export default async function DashboardPage() {
         userName={session.user?.name || undefined}
         userImage={session.user?.image || null}
         activeOrganizationId={session.user?.activeOrganizationId || null}
+        isSuperAdmin={userIsSuperAdmin}
       />
       <DashboardClient userId={session.user.id} organizationId={session.user?.activeOrganizationId || undefined} />
     </div>

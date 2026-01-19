@@ -130,13 +130,13 @@ export function ReferralLinkModal({ isOpen, onClose }: ReferralLinkModalProps) {
     <Modal isOpen={isOpen} onClose={onClose} title="Your Referral Link" size="md">
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
-          <div className="text-gray-500">Loading...</div>
+          <div className="text-subtle">Loading...</div>
         </div>
       ) : data ? (
         <div className="space-y-6">
           {/* Referral Code */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="mb-2 block text-sm font-medium text-foreground">
               Your Referral Code
             </label>
             {isEditing ? (
@@ -149,7 +149,7 @@ export function ReferralLinkModal({ isOpen, onClose }: ReferralLinkModalProps) {
                       setEditCode(e.target.value.toUpperCase());
                       setError(null);
                     }}
-                    className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 rounded-xl border border-border px-3 py-2 text-sm font-mono text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
                     placeholder="Enter custom code"
                     maxLength={20}
                     disabled={isSaving}
@@ -175,7 +175,7 @@ export function ReferralLinkModal({ isOpen, onClose }: ReferralLinkModalProps) {
                 {error && (
                   <p className="text-sm text-red-600">{error}</p>
                 )}
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-subtle">
                   3-20 characters, letters, numbers, hyphens, and underscores only
                 </p>
               </div>
@@ -185,7 +185,7 @@ export function ReferralLinkModal({ isOpen, onClose }: ReferralLinkModalProps) {
                   type="text"
                   value={data.referralCode}
                   readOnly
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono bg-gray-50 text-gray-900"
+                  className="flex-1 rounded-xl border border-border bg-surface-muted px-3 py-2 text-sm font-mono text-foreground"
                 />
                 <Button
                   variant="outline"
@@ -220,7 +220,7 @@ export function ReferralLinkModal({ isOpen, onClose }: ReferralLinkModalProps) {
 
           {/* Referral Link */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="mb-2 block text-sm font-medium text-foreground">
               Your Referral Link
             </label>
             <div className="flex gap-2">
@@ -228,7 +228,7 @@ export function ReferralLinkModal({ isOpen, onClose }: ReferralLinkModalProps) {
                 type="text"
                 value={data.referralLink}
                 readOnly
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm bg-gray-50 text-gray-900 truncate"
+                className="flex-1 rounded-xl border border-border bg-surface-muted px-3 py-2 text-sm text-foreground truncate"
               />
               <Button
                 variant="outline"
@@ -238,18 +238,18 @@ export function ReferralLinkModal({ isOpen, onClose }: ReferralLinkModalProps) {
                 {copied ? 'Copied!' : 'Copy'}
               </Button>
             </div>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-subtle">
               Share this link with others to earn rewards when they sign up!
             </p>
           </div>
 
           {/* Stats */}
-          <div className="border-t border-gray-200 pt-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Your Referral Stats</h3>
+          <div className="border-t border-border pt-4">
+            <h3 className="mb-3 text-sm font-semibold text-foreground">Your Referral Stats</h3>
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-blue-50 rounded-lg p-3">
-                <div className="text-xs text-blue-600 font-medium">Total Referrals</div>
-                <div className="text-2xl font-bold text-blue-900">{data.stats.totalReferrals}</div>
+              <div className="rounded-lg bg-brand-50 p-3">
+                <div className="text-xs font-medium text-brand">Total Referrals</div>
+                <div className="text-2xl font-bold text-foreground">{data.stats.totalReferrals}</div>
               </div>
               <div className="bg-green-50 rounded-lg p-3">
                 <div className="text-xs text-green-600 font-medium">Rewarded</div>

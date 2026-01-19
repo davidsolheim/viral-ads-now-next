@@ -38,8 +38,8 @@ export function OrganizationSwitcher({
   const getRoleBadge = (role: string) => {
     const colors = {
       owner: 'bg-purple-100 text-purple-800',
-      admin: 'bg-blue-100 text-blue-800',
-      member: 'bg-gray-100 text-gray-800',
+      admin: 'bg-brand-100 text-brand-700',
+      member: 'bg-surface-alt text-muted',
     };
     return colors[role as keyof typeof colors] || colors.member;
   };
@@ -63,14 +63,14 @@ export function OrganizationSwitcher({
               onClick={() => handleSwitch(org.organization.id)}
               className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors cursor-pointer ${
                 org.organization.id === activeOrganizationId
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  ? 'bg-brand-50 text-brand-700'
+                  : 'text-muted hover:bg-surface-muted'
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium truncate">{org.organization.name}</span>
                 {org.organization.id === activeOrganizationId && (
-                  <svg className="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="h-4 w-4 text-brand" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -87,7 +87,7 @@ export function OrganizationSwitcher({
             </button>
           ))
         ) : (
-          <div className="px-3 py-4 text-center text-sm text-gray-500">
+          <div className="px-3 py-4 text-center text-sm text-subtle">
             No organizations
           </div>
         )}
@@ -122,9 +122,9 @@ export function OrganizationSwitcher({
               className="fixed inset-0 z-10"
               onClick={() => setIsOpen(false)}
             />
-            <div className="absolute right-0 z-20 mt-2 w-64 rounded-lg border border-gray-200 bg-white shadow-lg">
+            <div className="absolute right-0 z-20 mt-2 w-64 rounded-lg border border-border bg-surface shadow-lg">
               <div className="p-2">
-                <div className="mb-2 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <div className="mb-2 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-subtle">
                   Organizations
                 </div>
                 
@@ -136,14 +136,14 @@ export function OrganizationSwitcher({
                         onClick={() => handleSwitch(org.organization.id)}
                         className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors cursor-pointer ${
                           org.organization.id === activeOrganizationId
-                            ? 'bg-blue-50 text-blue-700'
-                            : 'text-gray-700 hover:bg-gray-50'
+                            ? 'bg-brand-50 text-brand-700'
+                            : 'text-muted hover:bg-surface-muted'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium truncate">{org.organization.name}</span>
                           {org.organization.id === activeOrganizationId && (
-                            <svg className="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="h-4 w-4 text-brand" fill="currentColor" viewBox="0 0 20 20">
                               <path
                                 fillRule="evenodd"
                                 d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -161,18 +161,18 @@ export function OrganizationSwitcher({
                     ))}
                   </div>
                 ) : (
-                  <div className="px-3 py-4 text-center text-sm text-gray-500">
+                  <div className="px-3 py-4 text-center text-sm text-subtle">
                     No organizations
                   </div>
                 )}
 
-                <div className="mt-2 border-t border-gray-200 pt-2">
+                <div className="mt-2 border-t border-border pt-2">
                   <button
                     onClick={() => {
                       setIsOpen(false);
                       setIsCreateModalOpen(true);
                     }}
-                    className="w-full rounded-md px-3 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 cursor-pointer"
+                    className="w-full rounded-md px-3 py-2 text-left text-sm text-brand hover:bg-brand-50 cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

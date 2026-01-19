@@ -214,7 +214,7 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
         {/* Category Chips */}
         {getUniqueCategories.length > 0 && (
           <div className="mt-6">
-            <h2 className="mb-3 text-sm font-medium text-gray-700">Browse by Category</h2>
+            <h2 className="mb-3 text-sm font-medium text-muted">Browse by Category</h2>
             <div className="flex flex-wrap gap-2">
               {getUniqueCategories.map((cat) => (
                 <button
@@ -222,8 +222,8 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
                   onClick={() => handleCategoryClick(cat)}
                   className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                     category === cat
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-brand text-white'
+                      : 'bg-surface-muted text-muted hover:bg-surface-alt'
                   }`}
                 >
                   {cat}
@@ -235,7 +235,7 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
       </div>
 
       {/* Filters Section */}
-      <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="mb-6 rounded-lg border border-border bg-surface p-4 shadow-sm">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {/* Search */}
           <div className="xl:col-span-2">
@@ -249,13 +249,13 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
 
           {/* Category */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-muted">
               Category
             </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
             >
               <option value="">All Categories</option>
               {getUniqueCategories.map((cat) => (
@@ -293,13 +293,13 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
 
           {/* Sort */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-muted">
               Sort By
             </label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
             >
               <option value="trending">Trending Score</option>
               <option value="views">Most Views</option>
@@ -319,7 +319,7 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
           >
             Reset Filters
           </Button>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-muted">
             Showing {filteredAndSortedProducts.length} of {products.length} products
           </div>
         </div>
@@ -327,9 +327,9 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
 
       {/* Products Grid */}
       {filteredAndSortedProducts.length === 0 ? (
-        <div className="flex h-64 flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white p-8">
+        <div className="flex h-64 flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-surface p-8">
           <svg
-            className="h-12 w-12 text-gray-400"
+            className="h-12 w-12 text-subtle"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -341,8 +341,8 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
               d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
             />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No products found</h3>
-          <p className="mt-2 text-sm text-gray-600 text-center max-w-md">
+          <h3 className="mt-4 text-lg font-medium text-foreground">No products found</h3>
+          <p className="mt-2 text-sm text-muted text-center max-w-md">
             {searchQuery || category || maxPrice || minTrendingScore !== '10'
               ? 'Try adjusting your filters to see more products.'
               : 'No trending products available at the moment. Start collecting by visiting TikTok Shop!'}
@@ -373,10 +373,10 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
             {filteredAndSortedProducts.map((product) => (
               <div
                 key={product.id}
-                className="group relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:border-blue-500 hover:shadow-md"
+                className="group relative overflow-hidden rounded-lg border border-border bg-surface shadow-sm transition-all hover:border-brand/40 hover:shadow-md"
               >
                 {/* Product Image */}
-                <div className="relative aspect-square bg-gray-100">
+                <div className="relative aspect-square bg-surface-muted">
                   {product.images && product.images.length > 0 ? (
                     <img
                       src={product.images[0]}
@@ -388,7 +388,7 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
                       }}
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-gray-400">
+                    <div className="flex h-full w-full items-center justify-center text-subtle">
                       <svg
                         className="h-12 w-12"
                         fill="none"
@@ -406,7 +406,7 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
                   )}
                   {/* Trending Score Badge */}
                   {product.trendingScore && (
-                    <div className="absolute top-2 left-2 rounded-full bg-blue-600 px-2 py-1 text-xs font-semibold text-white">
+                    <div className="absolute top-2 left-2 rounded-full bg-brand px-2 py-1 text-xs font-semibold text-white">
                       🔥 {parseFloat(product.trendingScore).toFixed(0)}
                     </div>
                   )}
@@ -426,7 +426,7 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
 
                 {/* Product Info */}
                 <div className="p-4">
-                  <h3 className="mb-2 text-sm font-semibold text-gray-900 line-clamp-2 min-h-[2.5rem]">
+                  <h3 className="mb-2 text-sm font-semibold text-foreground line-clamp-2 min-h-[2.5rem]">
                     {product.name}
                   </h3>
 
@@ -434,7 +434,7 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
                   <div className="mb-3 flex items-baseline gap-2">
                     {product.price ? (
                       <>
-                        <span className="text-lg font-bold text-gray-900">
+                        <span className="text-lg font-bold text-foreground">
                           {formatPrice(product.price, product.currency)}
                         </span>
                         {product.originalPrice &&
@@ -468,7 +468,7 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
                     </p>
                   )}
 
-                  {/* View on TikTok Button */}
+                  {/* View Product Button */}
                   <Button
                     variant="outline"
                     size="sm"
@@ -482,7 +482,7 @@ export function TrendingProductsClient({ initialCategory = '', platform = 'tikto
                     >
                       <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-.88-.05 6.33 6.33 0 0 0-5.23 2.84 6.05 6.05 0 0 0 .86 8.35 5.89 5.89 0 0 0 4.15 1.68 6.33 6.33 0 0 0 5.93-4.11 6.05 6.05 0 0 0 .29-1.85V7.44a4.85 4.85 0 0 0 3.78 4.28v-3.4a4.84 4.84 0 0 1-1-.63z"/>
                     </svg>
-                    View on TikTok
+                    View Product
                   </Button>
                 </div>
               </div>

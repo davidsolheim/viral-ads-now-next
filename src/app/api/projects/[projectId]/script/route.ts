@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { getProject, getProductByProject, createScript, updateProjectStep } from '@/lib/db-queries';
-import { generateScript } from '@/lib/services/openai';
+import { getProject, getProductByProject, createScript, updateProjectStep, deleteScriptsByProject, getScriptsByProject } from '@/lib/db-queries';
+import { generateScriptCandidates, generateScript } from '@/lib/services/openai';
 import { trackUsageAndCheckLimits } from '@/lib/middleware/usage-tracking';
 import { z } from 'zod';
 
@@ -9,6 +9,7 @@ const generateScriptSchema = z.object({
   style: z.enum(['conversational', 'energetic', 'professional', 'casual']).optional(),
   duration: z.number().min(15).max(60).optional(),
   platform: z.enum(['tiktok', 'instagram', 'youtube']).optional(),
+  specialRequest: z.string().optional(),
 });
 
 export async function POST(
@@ -43,14 +44,14 @@ export async function POST(
     const body = await request.json();
     const options = generateScriptSchema.parse(body);
 
-    // Check usage limits before generating
+    // Check usage limits before generating (6 scripts)
     const usageCheck = await trackUsageAndCheckLimits({
       organizationId: project.organizationId,
       userId: session.user.id,
       projectId,
       usageType: 'script_generation',
-      units: 1,
-      cost: 0.001, // Approximate cost per script generation (adjust based on actual costs)
+      units: 6,
+      cost: 0.006, // Approximate cost for 6 script generations
       provider: 'openai',
     });
 
@@ -61,32 +62,47 @@ export async function POST(
       );
     }
 
-    // Generate script using OpenAI
-    const scriptContent = await generateScript({
-      product: {
-        name: product.name,
-        description: product.description || undefined,
-        price: product.price || undefined,
-        originalPrice: product.originalPrice || undefined,
-        features: (product.features as string[]) || undefined,
-        benefits: (product.benefits as string[]) || undefined,
-      },
+    // Build product data with special request if provided
+    const productData = {
+      name: product.name,
+      description: product.description || undefined,
+      price: product.price || undefined,
+      originalPrice: product.originalPrice || undefined,
+      features: (product.features as string[]) || undefined,
+      benefits: (product.benefits as string[]) || undefined,
+    };
+
+    // Add special request to description if provided
+    if (options.specialRequest) {
+      productData.description = `${productData.description || ''}\n\nSpecial Request: ${options.specialRequest}`.trim();
+    }
+
+    // Generate 6 script variations using OpenAI
+    const scriptContents = await generateScriptCandidates({
+      product: productData,
       style: options.style,
       duration: options.duration,
       platform: options.platform,
-    });
+    }, 6);
 
-    // Save script to database
-    const script = await createScript({
-      projectId,
-      content: scriptContent,
-      isSelected: true, // Auto-select the first generated script
-    });
+    // Delete existing scripts for this project
+    await deleteScriptsByProject(projectId);
+
+    // Save all scripts to database
+    const scripts = await Promise.all(
+      scriptContents.map((content, index) =>
+        createScript({
+          projectId,
+          content,
+          isSelected: index === 0, // Auto-select the first script
+        })
+      )
+    );
 
     // Update project step
     await updateProjectStep(projectId, 'scenes');
 
-    return NextResponse.json({ script }, { status: 201 });
+    return NextResponse.json({ scripts }, { status: 201 });
   } catch (error) {
     console.error('Error generating script:', error);
 
@@ -99,6 +115,35 @@ export async function POST(
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to generate script' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  try {
+    const session = await auth();
+    const { projectId } = await params;
+
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const project = await getProject(projectId);
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const scripts = await getScriptsByProject(projectId);
+
+    return NextResponse.json({ scripts }, { status: 200 });
+  } catch (error) {
+    console.error('Error fetching scripts:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to fetch scripts' },
       { status: 500 }
     );
   }

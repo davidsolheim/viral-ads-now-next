@@ -116,14 +116,14 @@ const categories = [
 export default function FaqPage() {
   return (
     <div className="bg-white">
-      <section className="border-b border-gray-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <section className="border-b border-border bg-gradient-to-br from-brand-50 via-white to-surface-muted">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:px-8">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">FAQ</p>
-            <h1 className="mt-3 text-4xl font-bold text-gray-900">
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand">FAQ</p>
+            <h1 className="mt-3 text-4xl font-bold text-foreground">
               Answers for fast-moving TikTok teams.
             </h1>
-            <p className="mt-4 text-lg text-gray-600">
+            <p className="mt-4 text-lg text-muted">
               Learn how Viral Ads Now works, what you get with each plan, and how to scale
               high-performing creatives without a studio.
             </p>
@@ -138,12 +138,12 @@ export default function FaqPage() {
               </Link>
             </div>
           </div>
-          <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-xl">
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+          <div className="rounded-3xl border border-brand/30 bg-surface p-6 shadow-xl">
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand">
               What teams love
             </p>
-            <h2 className="mt-3 text-2xl font-bold text-gray-900">Launch creatives in minutes.</h2>
-            <p className="mt-3 text-sm text-gray-600">
+            <h2 className="mt-3 text-2xl font-bold text-foreground">Launch creatives in minutes.</h2>
+            <p className="mt-3 text-sm text-muted">
               From product link to TikTok-ready ad, with scripts, scenes, captions, and voiceover
               included.
             </p>
@@ -151,10 +151,10 @@ export default function FaqPage() {
               {highlights.map((item) => (
                 <div
                   key={item.label}
-                  className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3"
+                  className="flex items-center justify-between rounded-2xl border border-border bg-surface-muted px-4 py-3"
                 >
-                  <span className="text-sm text-gray-600">{item.label}</span>
-                  <span className="text-sm font-semibold text-gray-900">{item.value}</span>
+                  <span className="text-sm text-muted">{item.label}</span>
+                  <span className="text-sm font-semibold text-foreground">{item.value}</span>
                 </div>
               ))}
             </div>
@@ -166,26 +166,26 @@ export default function FaqPage() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-2">
             {categories.map((category) => (
-              <div key={category.title} className="rounded-3xl border border-gray-200 bg-white p-6">
-                <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+              <div key={category.title} className="rounded-3xl border border-border bg-surface p-6">
+                <p className="text-xs font-semibold uppercase tracking-wide text-brand">
                   {category.title}
                 </p>
-                <h2 className="mt-3 text-2xl font-bold text-gray-900">{category.description}</h2>
+                <h2 className="mt-3 text-2xl font-bold text-foreground">{category.description}</h2>
                 <div className="mt-6 space-y-4">
                   {category.items.map((item) => (
                     <details
                       key={item.question}
-                      className="group rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3"
+                      className="group rounded-2xl border border-border bg-surface-muted px-4 py-3"
                     >
-                      <summary className="cursor-pointer list-none text-sm font-semibold text-gray-900">
+                      <summary className="cursor-pointer list-none text-sm font-semibold text-foreground">
                         <span className="flex items-center justify-between">
                           {item.question}
-                          <span className="ml-4 text-gray-400 group-open:rotate-45 transition-transform">
+                          <span className="ml-4 text-subtle group-open:rotate-45 transition-transform">
                             +
                           </span>
                         </span>
                       </summary>
-                      <p className="mt-3 text-sm text-gray-600">{item.answer}</p>
+                      <p className="mt-3 text-sm text-muted">{item.answer}</p>
                     </details>
                   ))}
                 </div>
@@ -195,30 +195,30 @@ export default function FaqPage() {
         </div>
       </section>
 
-      <section className="border-t border-gray-100 bg-gray-50">
+      <section className="border-t border-border bg-surface-muted">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+              <p className="text-sm font-semibold uppercase tracking-wide text-brand">
                 Still have questions?
               </p>
-              <h2 className="mt-3 text-3xl font-bold text-gray-900">
+              <h2 className="mt-3 text-3xl font-bold text-foreground">
                 Talk to our team about your TikTok growth goals.
               </h2>
-              <p className="mt-4 text-gray-600">
+              <p className="mt-4 text-muted">
                 Get a live walkthrough, discuss creative strategy, and see how quickly you can
                 launch.
               </p>
             </div>
-            <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm">
-              <div className="space-y-4 text-sm text-gray-700">
-                <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+            <div className="rounded-3xl border border-brand/30 bg-surface p-6 shadow-sm">
+              <div className="space-y-4 text-sm text-muted">
+                <div className="rounded-2xl border border-border bg-surface-muted px-4 py-3">
                   Live demo tailored to your products
                 </div>
-                <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                <div className="rounded-2xl border border-border bg-surface-muted px-4 py-3">
                   Creative strategy and iteration plan
                 </div>
-                <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                <div className="rounded-2xl border border-border bg-surface-muted px-4 py-3">
                   Personalized rollout timeline
                 </div>
               </div>

@@ -11,11 +11,11 @@ import { z } from 'zod';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; storyboardId: string }> }
+  { params }: { params: Promise<{ projectId: string; conceptId: string }> }
 ) {
   try {
     const session = await auth();
-    const { projectId, storyboardId } = await params;
+    const { projectId, conceptId } = await params;
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -28,36 +28,44 @@ export async function POST(
     }
 
     // Get the selected script
-    const script = await getScriptById(projectId, storyboardId);
+    const script = await getScriptById(projectId, conceptId);
     if (!script) {
-      return NextResponse.json({ error: 'Storyboard not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Concept not found' }, { status: 404 });
     }
 
     // Mark this script as selected (deselects all others)
-    await selectScript(storyboardId, projectId);
+    await selectScript(conceptId, projectId);
 
-    // Get scenes for this script (they should already exist from storyboard generation)
-    const existingScenes = await getScenesByScript(projectId, storyboardId);
+    // Get scenes for this script (they should already exist from concept generation)
+    const existingScenes = await getScenesByScript(projectId, conceptId);
 
-    // If scenes don't exist, we need to recreate them from the storyboard data
-    // For now, we'll assume they exist from the storyboard generation
+    // If scenes don't exist, we need to recreate them from the concept data
+    // For now, we'll assume they exist from the concept generation
     if (existingScenes.length === 0) {
       return NextResponse.json(
-        { error: 'No scenes found for this storyboard. Please regenerate storyboards.' },
+        { error: 'No scenes found for this concept. Please regenerate concepts.' },
         { status: 400 }
       );
     }
 
-    // Delete scenes from other storyboards (unselected scripts)
+    // Delete scenes from other concepts (unselected scripts)
     // We'll keep only the selected script's scenes
     const allScenes = await getScenesByScript(projectId, null); // Get all scenes
-    const scenesToDelete = allScenes.filter((s: any) => s.scriptId !== storyboardId);
+    const scenesToDelete = allScenes.filter((s: any) => s.scriptId !== conceptId);
     
     // Note: We'll keep the scenes for now and just mark the script as selected
     // The cleanup can happen later or during final generation
 
-    // Update project step to proceed with automation
-    await updateProjectStep(projectId, 'compile');
+    // Update project step based on flow type
+    // For automatic flow, auto-generate will update to compile
+    // For manual flow, proceed to script step
+    const flowType = (project.settings as any)?.flowType || 'manual';
+    if (flowType === 'automatic') {
+      // Keep at concept step - auto-generate will update to compile
+      await updateProjectStep(projectId, 'concept');
+    } else {
+      await updateProjectStep(projectId, 'script');
+    }
 
     return NextResponse.json(
       {
@@ -71,7 +79,7 @@ export async function POST(
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error selecting storyboard:', error);
+    console.error('Error selecting concept:', error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -81,7 +89,7 @@ export async function POST(
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to select storyboard' },
+      { error: error instanceof Error ? error.message : 'Failed to select concept' },
       { status: 500 }
     );
   }

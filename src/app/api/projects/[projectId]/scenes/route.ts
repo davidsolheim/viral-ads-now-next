@@ -7,13 +7,17 @@ import {
   getScriptById,
   getSelectedScriptByProject,
   updateProjectStep,
+  getScenesByProject,
+  updateProjectSettings,
 } from '@/lib/db-queries';
 import { breakdownIntoScenes } from '@/lib/services/openai';
 import { z } from 'zod';
 
 const generateScenesSchema = z.object({
   scriptId: z.string().optional(),
-  targetScenes: z.number().min(2).max(8).optional(),
+  targetScenes: z.number().min(3).max(5).optional(),
+  imageModel: z.string().optional(),
+  videoModel: z.string().optional(),
 });
 
 export async function POST(
@@ -60,7 +64,7 @@ export async function POST(
     // Delete existing scenes for this project
     await deleteScenesByProject(projectId);
 
-    // Save scenes to database
+    // Save scenes to database with image prompts
     const scenes = await Promise.all(
       sceneData.map((scene) =>
         createScene({
@@ -68,9 +72,20 @@ export async function POST(
           sceneNumber: scene.sceneNumber,
           scriptText: scene.scriptText,
           visualDescription: scene.visualDescription,
+          imagePrompt: scene.visualDescription, // Use visual description as initial image prompt
         })
       )
     );
+
+    // Update project settings with model selections if provided
+    if (options.imageModel || options.videoModel) {
+      const currentSettings = (project.settings as any) || {};
+      await updateProjectSettings(projectId, {
+        ...currentSettings,
+        image_model: options.imageModel || currentSettings.image_model,
+        video_model: options.videoModel || currentSettings.video_model,
+      });
+    }
 
     // Update project step
     await updateProjectStep(projectId, 'images');
@@ -88,6 +103,35 @@ export async function POST(
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to generate scenes' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  try {
+    const session = await auth();
+    const { projectId } = await params;
+
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const project = await getProject(projectId);
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const scenes = await getScenesByProject(projectId);
+
+    return NextResponse.json({ scenes }, { status: 200 });
+  } catch (error) {
+    console.error('Error fetching scenes:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to fetch scenes' },
       { status: 500 }
     );
   }

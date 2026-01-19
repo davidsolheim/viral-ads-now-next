@@ -20,6 +20,7 @@ import {
   creditTransactions,
   invoices,
   usageRecords,
+  musicTracks,
   tiktokShopProducts,
   tiktokShopVideos,
   tiktokShopLiveStreams,
@@ -28,7 +29,7 @@ import {
   tiktokShopRefreshQueue,
   referrals,
 } from '@/db/schema';
-import { eq, and, desc, isNull, or, sql, gte, lte, lt, count, like, asc } from 'drizzle-orm';
+import { eq, and, desc, isNull, or, sql, gte, lte, lt, count, like, asc, inArray } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { calculateTrendingScore } from '@/lib/tiktok-shop/recommendations';
 
@@ -49,6 +50,8 @@ export async function createProject(data: {
   organizationId: string;
   creatorId: string;
   productUrl?: string;
+  productId?: string;
+  flowType?: 'manual' | 'automatic';
 }) {
   const db = await getDb();
   const [project] = await db.insert(projects).values({
@@ -57,10 +60,42 @@ export async function createProject(data: {
     organizationId: data.organizationId,
     creatorId: data.creatorId,
     productUrl: data.productUrl,
+    productId: data.productId,
     currentStep: 'product',
+    settings: {
+      flowType: data.flowType || 'manual',
+    },
     createdAt: new Date(),
   }).returning();
 
+  return project;
+}
+
+export async function createProjectFromProduct(data: {
+  productId: string;
+  name: string;
+  organizationId: string;
+  creatorId: string;
+  flowType?: 'manual' | 'automatic';
+}) {
+  const db = await getDb();
+  
+  // Get the product
+  const product = await getProductById(data.productId);
+  if (!product) {
+    throw new Error('Product not found');
+  }
+  
+  // Create project with product linked
+  const project = await createProject({
+    name: data.name,
+    organizationId: data.organizationId,
+    creatorId: data.creatorId,
+    productId: data.productId,
+    productUrl: product.url || undefined,
+    flowType: data.flowType || 'manual',
+  });
+  
   return project;
 }
 
@@ -222,8 +257,41 @@ export async function getProjectsByOrganization(organizationId: string) {
   return await db
     .select()
     .from(projects)
-    .where(eq(projects.organizationId, organizationId))
+    .where(and(eq(projects.organizationId, organizationId), isNull(projects.deletedAt)))
     .orderBy(desc(projects.createdAt));
+}
+
+export async function updateProjectName(projectId: string, name: string) {
+  const db = await getDb();
+  const [updated] = await db
+    .update(projects)
+    .set({ name, updatedAt: new Date() })
+    .where(eq(projects.id, projectId))
+    .returning();
+
+  return updated;
+}
+
+export async function archiveProject(projectId: string) {
+  const db = await getDb();
+  const [archived] = await db
+    .update(projects)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(eq(projects.id, projectId))
+    .returning();
+
+  return archived;
+}
+
+export async function unarchiveProject(projectId: string) {
+  const db = await getDb();
+  const [unarchived] = await db
+    .update(projects)
+    .set({ deletedAt: null, updatedAt: new Date() })
+    .where(eq(projects.id, projectId))
+    .returning();
+
+  return unarchived;
 }
 
 export async function updateProjectStep(projectId: string, step: string) {
@@ -231,6 +299,20 @@ export async function updateProjectStep(projectId: string, step: string) {
   const [updated] = await db
     .update(projects)
     .set({ currentStep: step, updatedAt: new Date() })
+    .where(eq(projects.id, projectId))
+    .returning();
+
+  return updated;
+}
+
+export async function updateProjectStatus(
+  projectId: string,
+  status: 'draft' | 'in_progress' | 'completed' | 'failed'
+) {
+  const db = await getDb();
+  const [updated] = await db
+    .update(projects)
+    .set({ status, updatedAt: new Date() })
     .where(eq(projects.id, projectId))
     .returning();
 
@@ -270,6 +352,17 @@ export async function updateProjectProductUrl(projectId: string, productUrl: str
   return updated;
 }
 
+export async function updateProjectProductId(projectId: string, productId: string | null) {
+  const db = await getDb();
+  const [updated] = await db
+    .update(projects)
+    .set({ productId, updatedAt: new Date() })
+    .where(eq(projects.id, projectId))
+    .returning();
+
+  return updated;
+}
+
 // Product Queries
 
 /**
@@ -298,7 +391,7 @@ function parsePrice(price?: string): string | null {
 }
 
 export async function createProduct(data: {
-  projectId: string;
+  userId: string;
   name: string;
   description?: string;
   price?: string;
@@ -310,6 +403,7 @@ export async function createProduct(data: {
   features?: string[];
   benefits?: string[];
   url?: string;
+  organizationId?: string;
 }) {
   const db = await getDb();
   
@@ -318,7 +412,8 @@ export async function createProduct(data: {
   // Features/Benefits: save arrays if they have items, null if empty/undefined
   const [product] = await db.insert(products).values({
     id: createId(),
-    projectId: data.projectId,
+    userId: data.userId,
+    organizationId: data.organizationId || null,
     name: data.name,
     // Preserve description - save empty string if provided, null only if undefined
     description: data.description !== undefined ? (data.description || null) : null,
@@ -333,27 +428,25 @@ export async function createProduct(data: {
     features: data.features !== undefined ? (data.features.length > 0 ? data.features : null) : null,
     benefits: data.benefits !== undefined ? (data.benefits.length > 0 ? data.benefits : null) : null,
     url: data.url || null,
+    createdAt: new Date(),
   }).returning();
 
   return product;
 }
 
-export async function updateProductByProject(
-  projectId: string,
-  data: {
-    name?: string;
-    description?: string;
-    price?: string;
-    originalPrice?: string;
-    currency?: string;
-    category?: string;
-    soldCount?: number;
-    images?: string[];
-    features?: string[];
-    benefits?: string[];
-    url?: string;
-  }
-) {
+export async function updateProduct(productId: string, data: {
+  name?: string;
+  description?: string;
+  price?: string;
+  originalPrice?: string;
+  currency?: string;
+  category?: string;
+  soldCount?: number;
+  images?: string[];
+  features?: string[];
+  benefits?: string[];
+  url?: string;
+}) {
   const db = await getDb();
   
   // Process data to handle empty arrays for JSONB fields and price parsing
@@ -384,19 +477,280 @@ export async function updateProductByProject(
   const [product] = await db
     .update(products)
     .set(updateData)
-    .where(eq(products.projectId, projectId))
+    .where(eq(products.id, productId))
     .returning();
 
   return product;
 }
 
+// Legacy function for backward compatibility
+export async function updateProductByProject(
+  projectId: string,
+  data: {
+    name?: string;
+    description?: string;
+    price?: string;
+    originalPrice?: string;
+    currency?: string;
+    category?: string;
+    soldCount?: number;
+    images?: string[];
+    features?: string[];
+    benefits?: string[];
+    url?: string;
+  }
+) {
+  const db = await getDb();
+  
+  // Get product via project
+  const project = await getProject(projectId);
+  if (!project?.productId) {
+    return null;
+  }
+  
+  return updateProduct(project.productId, data);
+}
+
 export async function getProductByProject(projectId: string) {
+  const db = await getDb();
+  const project = await getProject(projectId);
+  if (!project?.productId) {
+    return null;
+  }
+  
+  const [product] = await db
+    .select()
+    .from(products)
+    .where(eq(products.id, project.productId))
+    .limit(1);
+
+  return product;
+}
+
+export async function getProductById(productId: string) {
   const db = await getDb();
   const [product] = await db
     .select()
     .from(products)
-    .where(eq(products.projectId, projectId))
+    .where(eq(products.id, productId))
     .limit(1);
+
+  return product;
+}
+
+export async function archiveProduct(productId: string) {
+  const db = await getDb();
+  const [archived] = await db
+    .update(products)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(eq(products.id, productId))
+    .returning();
+
+  return archived;
+}
+
+export async function unarchiveProduct(productId: string) {
+  const db = await getDb();
+  const [unarchived] = await db
+    .update(products)
+    .set({ deletedAt: null, updatedAt: new Date() })
+    .where(eq(products.id, productId))
+    .returning();
+
+  return unarchived;
+}
+
+export async function archiveFinalVideo(videoId: string) {
+  const db = await getDb();
+  const [archived] = await db
+    .update(finalVideos)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(eq(finalVideos.id, videoId))
+    .returning();
+
+  return archived;
+}
+
+export async function unarchiveFinalVideo(videoId: string) {
+  const db = await getDb();
+  const [unarchived] = await db
+    .update(finalVideos)
+    .set({ deletedAt: null, updatedAt: new Date() })
+    .where(eq(finalVideos.id, videoId))
+    .returning();
+
+  return unarchived;
+}
+
+export async function getProductsWithVideoInfo(productIds: string[]) {
+  const db = await getDb();
+  if (productIds.length === 0) return {};
+
+  // Get all projects for these products
+  const productProjects = await db
+    .select({
+      productId: projects.productId,
+      projectId: projects.id,
+      projectName: projects.name,
+      projectStatus: projects.status,
+      projectCreatedAt: projects.createdAt,
+      projectUpdatedAt: projects.updatedAt,
+    })
+    .from(projects)
+    .where(
+      and(
+        inArray(projects.productId, productIds),
+        isNull(projects.deletedAt)
+      )
+    );
+
+  if (productProjects.length === 0) {
+    // Return empty result for all productIds
+    const result: Record<string, {
+      hasVideo: boolean;
+      latestVideo?: { id: string; url: string; createdAt: Date | null };
+      latestProject?: { id: string; name: string; status: string; updatedAt: Date | null };
+    }> = {};
+    for (const productId of productIds) {
+      result[productId] = { hasVideo: false };
+    }
+    return result;
+  }
+
+  const projectIds = productProjects.map((p: { projectId: string }) => p.projectId);
+
+  // Get all final videos for these projects
+  const projectVideos = await db
+    .select({
+      projectId: finalVideos.projectId,
+      videoId: finalVideos.id,
+      videoUrl: finalVideos.url,
+      videoCreatedAt: finalVideos.createdAt,
+    })
+    .from(finalVideos)
+    .where(
+      and(
+        inArray(finalVideos.projectId, projectIds),
+        isNull(finalVideos.deletedAt)
+      )
+    )
+    .orderBy(desc(finalVideos.createdAt));
+
+  // Group by productId
+  const result: Record<string, {
+    hasVideo: boolean;
+    latestVideo?: { id: string; url: string; createdAt: Date | null };
+    latestProject?: { id: string; name: string; status: string; updatedAt: Date | null };
+  }> = {};
+
+  // Initialize all productIds
+  for (const productId of productIds) {
+    result[productId] = {
+      hasVideo: false,
+    };
+  }
+
+  // Map projects to products
+  for (const project of productProjects) {
+    if (project.productId) {
+      if (!result[project.productId]) {
+        result[project.productId] = { hasVideo: false };
+      }
+      const currentLatest = result[project.productId].latestProject;
+      if (!currentLatest ||
+          (project.projectUpdatedAt && currentLatest.updatedAt &&
+           project.projectUpdatedAt > currentLatest.updatedAt)) {
+        result[project.productId].latestProject = {
+          id: project.projectId,
+          name: project.projectName,
+          status: project.projectStatus,
+          updatedAt: project.projectUpdatedAt,
+        };
+      }
+    }
+  }
+
+  // Map videos to projects to products
+  for (const video of projectVideos) {
+    const project = productProjects.find((p: { projectId: string }) => p.projectId === video.projectId);
+    if (project?.productId) {
+      if (!result[project.productId]) {
+        result[project.productId] = { hasVideo: false };
+      }
+      result[project.productId].hasVideo = true;
+      const currentLatest = result[project.productId].latestVideo;
+      if (!currentLatest ||
+          (video.videoCreatedAt && currentLatest.createdAt &&
+           video.videoCreatedAt > currentLatest.createdAt)) {
+        result[project.productId].latestVideo = {
+          id: video.videoId,
+          url: video.videoUrl,
+          createdAt: video.videoCreatedAt,
+        };
+      }
+    }
+  }
+
+  return result;
+}
+
+export async function getProductsByUser(userId: string, includeArchived: boolean = false) {
+  const db = await getDb();
+  const conditions = [eq(products.userId, userId)];
+  if (!includeArchived) {
+    conditions.push(isNull(products.deletedAt));
+  }
+  return await db
+    .select()
+    .from(products)
+    .where(and(...conditions))
+    .orderBy(desc(products.createdAt));
+}
+
+export async function getProductsByOrganization(organizationId: string, includeArchived: boolean = false) {
+  const db = await getDb();
+  const conditions = [eq(products.organizationId, organizationId)];
+  if (!includeArchived) {
+    conditions.push(isNull(products.deletedAt));
+  }
+  return await db
+    .select()
+    .from(products)
+    .where(and(...conditions))
+    .orderBy(desc(products.createdAt));
+}
+
+export async function getProductByUrl(userId: string, url: string) {
+  const db = await getDb();
+  const [product] = await db
+    .select()
+    .from(products)
+    .where(and(eq(products.userId, userId), eq(products.url, url), isNull(products.deletedAt)))
+    .limit(1);
+
+  return product;
+}
+
+export async function getVideosByProduct(productId: string) {
+  const db = await getDb();
+  return await db
+    .select({
+      video: finalVideos,
+      project: projects,
+    })
+    .from(finalVideos)
+    .innerJoin(projects, eq(finalVideos.projectId, projects.id))
+    .where(and(eq(projects.productId, productId), isNull(finalVideos.deletedAt)))
+    .orderBy(desc(finalVideos.createdAt));
+}
+
+export async function shareProductWithOrganization(productId: string, organizationId: string) {
+  const db = await getDb();
+  const [product] = await db
+    .update(products)
+    .set({ organizationId, updatedAt: new Date() })
+    .where(eq(products.id, productId))
+    .returning();
 
   return product;
 }
@@ -469,7 +823,7 @@ export async function selectScript(scriptId: string, projectId: string) {
   return selected;
 }
 
-export async function updateScript(scriptId: string, data: { isSelected?: boolean; metadata?: any }) {
+export async function updateScript(scriptId: string, data: { content?: string; isSelected?: boolean; metadata?: any }) {
   const db = await getDb();
   const [updated] = await db
     .update(scripts)
@@ -488,6 +842,7 @@ export async function createScene(data: {
   scriptText: string;
   visualDescription: string;
   scriptId?: string;
+  imagePrompt?: string;
 }) {
   const db = await getDb();
   const [scene] = await db.insert(scenes).values({
@@ -496,6 +851,7 @@ export async function createScene(data: {
     sceneNumber: data.sceneNumber,
     scriptText: data.scriptText,
     visualDescription: data.visualDescription,
+    imagePrompt: data.imagePrompt || null,
     scriptId: data.scriptId || null,
     createdAt: new Date(),
   }).returning();
@@ -515,6 +871,40 @@ export async function getScenesByProject(projectId: string) {
 export async function deleteScenesByProject(projectId: string) {
   const db = await getDb();
   await db.delete(scenes).where(eq(scenes.projectId, projectId));
+}
+
+export async function deleteScriptsByProject(projectId: string) {
+  const db = await getDb();
+  await db.delete(scripts).where(eq(scripts.projectId, projectId));
+}
+
+export async function updateScene(sceneId: string, data: {
+  imagePrompt?: string;
+  videoPrompt?: string;
+  metadata?: any;
+}) {
+  const db = await getDb();
+  const updateData: any = {};
+  if (data.imagePrompt !== undefined) updateData.imagePrompt = data.imagePrompt;
+  if (data.videoPrompt !== undefined) {
+    // Store videoPrompt in metadata if not in schema
+    const currentScene = await db.select().from(scenes).where(eq(scenes.id, sceneId)).limit(1);
+    const currentMetadata = (currentScene[0]?.metadata as any) || {};
+    updateData.metadata = { ...currentMetadata, videoPrompt: data.videoPrompt };
+  }
+  if (data.metadata !== undefined) {
+    const currentScene = await db.select().from(scenes).where(eq(scenes.id, sceneId)).limit(1);
+    const currentMetadata = (currentScene[0]?.metadata as any) || {};
+    updateData.metadata = { ...currentMetadata, ...data.metadata };
+  }
+  
+  const [updated] = await db
+    .update(scenes)
+    .set(updateData)
+    .where(eq(scenes.id, sceneId))
+    .returning();
+
+  return updated;
 }
 
 export async function getScenesByScript(projectId: string, scriptId: string | null) {
@@ -587,6 +977,28 @@ export async function getMediaAssetsByScene(sceneId: string) {
     .from(mediaAssets)
     .where(eq(mediaAssets.sceneId, sceneId!))
     .orderBy(desc(mediaAssets.createdAt));
+}
+
+export async function updateMediaAsset(assetId: string, data: { metadata?: any }) {
+  const db = await getDb();
+  const [updated] = await db
+    .update(mediaAssets)
+    .set({
+      metadata: data.metadata,
+    })
+    .where(eq(mediaAssets.id, assetId))
+    .returning();
+
+  return updated;
+}
+
+export async function getMusicTracksByOrganization(organizationId: string) {
+  const db = await getDb();
+  return await db
+    .select()
+    .from(musicTracks)
+    .where(or(eq(musicTracks.organizationId, organizationId), eq(musicTracks.isDefault, true)))
+    .orderBy(desc(musicTracks.createdAt));
 }
 
 // Final Video Queries

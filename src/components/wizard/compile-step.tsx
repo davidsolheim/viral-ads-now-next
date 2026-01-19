@@ -202,14 +202,14 @@ export function CompileStep({ projectId, onNext }: CompileStepProps) {
 
       <div className="mt-6 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-2">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             Platform
           </label>
           <select
             value={platform}
             onChange={(e) => setPlatform(e.target.value as VideoPlatform)}
             disabled={isCompiling}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-xl border border-border bg-white px-4 py-2 text-sm font-medium text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {supportedPlatforms.map((p) => (
               <option key={p} value={p}>
@@ -217,13 +217,13 @@ export function CompileStep({ projectId, onNext }: CompileStepProps) {
               </option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-subtle">
             Settings will auto-update based on platform requirements
           </p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-2">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             Aspect Ratio
           </label>
           <div className="grid grid-cols-3 gap-3">
@@ -238,19 +238,19 @@ export function CompileStep({ projectId, onNext }: CompileStepProps) {
                 disabled={isCompiling}
                 className={`rounded-lg border-2 px-4 py-3 text-sm font-medium transition-colors ${
                   aspectRatio === ratio.id
-                    ? 'border-blue-600 bg-blue-50 text-blue-700'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                    ? 'border-brand bg-brand-50 text-brand-700'
+                    : 'border-border bg-white text-muted hover:border-border-strong'
                 } ${isCompiling ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <div>{ratio.name}</div>
-                <div className="text-xs text-gray-500">{ratio.ratio}</div>
+                <div className="text-xs text-subtle">{ratio.ratio}</div>
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-2">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             Resolution
           </label>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -261,8 +261,8 @@ export function CompileStep({ projectId, onNext }: CompileStepProps) {
                 disabled={isCompiling}
                 className={`rounded-lg border-2 px-4 py-3 text-sm font-medium transition-colors ${
                   resolution === r
-                    ? 'border-blue-600 bg-blue-50 text-blue-700'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                    ? 'border-brand bg-brand-50 text-brand-700'
+                    : 'border-border bg-white text-muted hover:border-border-strong'
                 } ${isCompiling ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {r}
@@ -278,9 +278,9 @@ export function CompileStep({ projectId, onNext }: CompileStepProps) {
             checked={includeCaptions}
             onChange={(e) => setIncludeCaptions(e.target.checked)}
             disabled={isCompiling}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="h-4 w-4 rounded border-border text-brand focus:ring-brand/30"
           />
-          <label htmlFor="captions" className="text-sm font-medium text-gray-900">
+          <label htmlFor="captions" className="text-sm font-medium text-foreground">
             Include captions
           </label>
         </div>
@@ -295,12 +295,12 @@ export function CompileStep({ projectId, onNext }: CompileStepProps) {
           <div className="flex flex-col items-center justify-center py-12">
             <Loading size="lg" text={progress || 'Compiling your video...'} />
             {isLoadingAssets && (
-              <p className="mt-4 text-sm text-gray-500">
+              <p className="mt-4 text-sm text-subtle">
                 Loading project assets...
               </p>
             )}
             {!isLoadingAssets && (
-              <p className="mt-4 text-sm text-gray-500">
+              <p className="mt-4 text-sm text-subtle">
                 This may take several minutes depending on video length
               </p>
             )}

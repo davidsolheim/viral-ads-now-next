@@ -18,6 +18,7 @@ interface SeedResponse {
   };
   message?: string;
   error?: string;
+  debug?: any;
 }
 
 // Common country codes for TikTok
@@ -173,13 +174,13 @@ export function RapidAPISeedClient() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Order By */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="mb-2 block text-sm font-medium text-foreground">
                 Order By
               </label>
               <select
                 value={orderBy}
                 onChange={(e) => setOrderBy(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="block w-full rounded-xl border border-border px-3 py-2 text-sm text-foreground shadow-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
                 disabled={isLoading}
               >
                 <option value="post">Post</option>
@@ -188,26 +189,26 @@ export function RapidAPISeedClient() {
                 <option value="comments">Comments</option>
                 <option value="shares">Shares</option>
               </select>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-subtle">
                 Field to order results by
               </p>
             </div>
 
             {/* Order Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="mb-2 block text-sm font-medium text-foreground">
                 Order Type
               </label>
               <select
                 value={orderType}
                 onChange={(e) => setOrderType(e.target.value as 'asc' | 'desc')}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="block w-full rounded-xl border border-border px-3 py-2 text-sm text-foreground shadow-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
                 disabled={isLoading}
               >
                 <option value="desc">Descending</option>
                 <option value="asc">Ascending</option>
               </select>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-subtle">
                 Sort direction
               </p>
             </div>
@@ -216,13 +217,13 @@ export function RapidAPISeedClient() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Country Selection (Optional) */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label className="mb-2 block text-sm font-medium text-foreground">
                 Country (Optional)
               </label>
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="block w-full rounded-xl border border-border px-3 py-2 text-sm text-foreground shadow-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
                 disabled={isLoading}
               >
                 <option value="">All Countries</option>
@@ -232,7 +233,7 @@ export function RapidAPISeedClient() {
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-subtle">
                 Optional: Filter by country
               </p>
             </div>
@@ -266,7 +267,7 @@ export function RapidAPISeedClient() {
             </Button>
             
             {results && (
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted">
                 Last run: {new Date().toLocaleTimeString()}
               </div>
             )}
@@ -275,14 +276,14 @@ export function RapidAPISeedClient() {
 
         {/* Results Display */}
         {results && (
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="mt-8 border-t border-border pt-6">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
               Results
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="text-sm text-blue-600 font-medium">Fetched</div>
-                <div className="text-2xl font-bold text-blue-900">{results.fetched}</div>
+              <div className="rounded-lg bg-brand-50 p-4">
+                <div className="text-sm font-medium text-brand">Fetched</div>
+                <div className="text-2xl font-bold text-foreground">{results.fetched}</div>
               </div>
               <div className="bg-green-50 rounded-lg p-4">
                 <div className="text-sm text-green-600 font-medium">Created</div>

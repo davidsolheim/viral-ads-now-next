@@ -92,7 +92,7 @@ export function OnboardingClient({
       <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg">
         <div className="text-center">
           <Image
-            src="/viral-ads-now-icon.png"
+            src="/icon.svg"
             alt="Viral Ads Now"
             width={64}
             height={64}

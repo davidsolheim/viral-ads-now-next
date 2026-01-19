@@ -5,6 +5,7 @@ import {
   getProject,
   getScriptById,
   getSelectedScriptByProject,
+  getMediaAssetsByProject,
   updateProjectStep,
 } from '@/lib/db-queries';
 import { generateVoiceover } from '@/lib/services/replicate';
@@ -19,6 +20,8 @@ const generateVoiceoverSchema = z.object({
   pitch: z.number().min(-12).max(12).optional(),
   volume: z.number().min(0).max(100).optional(),
   emotion: z.enum(['neutral', 'happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised']).optional(),
+  cloneSampleUrl: z.string().url().optional(),
+  voiceType: z.enum(['preset', 'clone']).optional(),
 });
 
 export async function POST(
@@ -103,6 +106,8 @@ export async function POST(
       url: uploadResult.url,
       metadata: {
         voice: options.voice,
+        voiceType: options.voiceType,
+        cloneSampleUrl: options.cloneSampleUrl,
         speed: options.speed,
         pitch: options.pitch,
         volume: options.volume,
@@ -127,6 +132,34 @@ export async function POST(
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to generate voiceover' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  try {
+    const session = await auth();
+    const { projectId } = await params;
+
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const project = await getProject(projectId);
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const voiceovers = await getMediaAssetsByProject(projectId, 'voiceover');
+    return NextResponse.json({ voiceovers }, { status: 200 });
+  } catch (error) {
+    console.error('Error fetching voiceovers:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to fetch voiceovers' },
       { status: 500 }
     );
   }

@@ -40,27 +40,27 @@ export default async function SignInPage({
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg">
+    <div className="flex min-h-screen items-center justify-center bg-surface-muted">
+      <div className="w-full max-w-md space-y-8 rounded-2xl border border-border bg-surface p-8 shadow-xl">
         <div className="text-center">
           <Image
-            src="/viral-ads-now-icon.png"
+            src="/icon.svg"
             alt="Viral Ads Now"
             width={64}
             height={64}
             className="mx-auto h-16 w-16 rounded-xl mb-4"
           />
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Viral Ads Now
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-muted">
             Sign in to create instant video ads
           </p>
         </div>
         
         <div className="relative h-32 w-full overflow-hidden rounded-lg">
           <Image
-            src="/viral-ads-now-banner.png"
+            src="/banner.png"
             alt="Viral Ads Now"
             fill
             className="object-cover"
@@ -71,7 +71,7 @@ export default async function SignInPage({
           <form action={handleGoogleSignIn}>
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-white px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-brand/30 focus:ring-offset-2"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path
@@ -97,10 +97,10 @@ export default async function SignInPage({
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+              <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">Or</span>
+              <span className="bg-surface px-2 text-subtle">Or</span>
             </div>
           </div>
 
@@ -108,7 +108,7 @@ export default async function SignInPage({
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-900"
+                className="block text-sm font-medium text-foreground"
               >
                 Email address
               </label>
@@ -118,20 +118,20 @@ export default async function SignInPage({
                 type="email"
                 autoComplete="email"
                 required
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-xl border border-border px-3 py-2 text-sm text-foreground shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
                 placeholder="you@example.com"
               />
             </div>
             <button
               type="submit"
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="w-full rounded-xl bg-brand px-4 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:ring-offset-2"
             >
               Continue with Email
             </button>
           </form>
         </div>
 
-        <p className="mt-4 text-center text-xs text-gray-500">
+        <p className="mt-4 text-center text-xs text-subtle">
           By signing in, you agree to our Terms of Service and Privacy Policy
         </p>
       </div>

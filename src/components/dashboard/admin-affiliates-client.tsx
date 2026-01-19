@@ -174,12 +174,12 @@ export function AdminAffiliatesClient() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="rounded-lg border border-border bg-surface p-6 shadow-sm">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="mb-2 text-2xl font-bold text-foreground">
             Affiliates Management
           </h1>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             Manage all affiliates, track referrals, and update commissions.
           </p>
         </div>
@@ -187,9 +187,9 @@ export function AdminAffiliatesClient() {
         {/* Stats Dashboard */}
         {stats && (
           <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="text-sm text-blue-600 font-medium">Total Affiliates</div>
-              <div className="text-2xl font-bold text-blue-900">{stats.totalAffiliates}</div>
+            <div className="rounded-lg bg-brand-50 p-4">
+              <div className="text-sm font-medium text-brand">Total Affiliates</div>
+              <div className="text-2xl font-bold text-foreground">{stats.totalAffiliates}</div>
             </div>
             <div className="bg-green-50 rounded-lg p-4">
               <div className="text-sm text-green-600 font-medium">Active Affiliates</div>
@@ -222,7 +222,7 @@ export function AdminAffiliatesClient() {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900"
+              className="rounded-xl border border-border px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
             >
               <option value="">All Statuses</option>
               <option value="pending">Pending</option>
@@ -236,7 +236,7 @@ export function AdminAffiliatesClient() {
                 setSortBy(by as typeof sortBy);
                 setSortOrder(order as typeof sortOrder);
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900"
+              className="rounded-xl border border-border px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
             >
               <option value="createdAt-desc">Newest First</option>
               <option value="createdAt-asc">Oldest First</option>
@@ -256,48 +256,48 @@ export function AdminAffiliatesClient() {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-border">
+            <thead className="bg-surface-muted">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-subtle uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-subtle uppercase tracking-wider">
                   Referral Code
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-subtle uppercase tracking-wider">
                   Status Breakdown
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-subtle uppercase tracking-wider">
                   Total Referrals
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-subtle uppercase tracking-wider">
                   Total Rewards
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-subtle uppercase tracking-wider">
                   Created Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-subtle uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-surface divide-y divide-border">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-4 text-center text-subtle">
                     Loading...
                   </td>
                 </tr>
               ) : affiliates.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-4 text-center text-subtle">
                     No affiliates found
                   </td>
                 </tr>
               ) : (
                 affiliates.map((affiliate) => (
-                  <tr key={affiliate.referrerId} className="hover:bg-gray-50">
+                  <tr key={affiliate.referrerId} className="hover:bg-surface-muted">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {affiliate.user?.image ? (
@@ -307,22 +307,22 @@ export function AdminAffiliatesClient() {
                             alt={affiliate.user.name || 'User'}
                           />
                         ) : (
-                          <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-sm font-medium text-white">
                             {(affiliate.user?.name || affiliate.user?.email || 'U').charAt(0).toUpperCase()}
                           </div>
                         )}
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-foreground">
                             {affiliate.user?.name || 'Unknown'}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-subtle">
                             {affiliate.user?.email || 'N/A'}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <code className="text-sm font-mono text-gray-900 bg-gray-100 px-2 py-1 rounded">
+                      <code className="rounded bg-surface-muted px-2 py-1 text-sm font-mono text-foreground">
                         {affiliate.referralCode}
                       </code>
                     </td>
@@ -331,7 +331,7 @@ export function AdminAffiliatesClient() {
                         <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
                           P: {affiliate.statusBreakdown.pending || 0}
                         </span>
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        <span className="bg-brand-100 text-brand-700 px-2 py-1 rounded">
                           C: {affiliate.statusBreakdown.claimed || 0}
                         </span>
                         <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
@@ -339,13 +339,13 @@ export function AdminAffiliatesClient() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                       {affiliate.referralsCount}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                       {affiliate.totalRewards}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-subtle">
                       {new Date(affiliate.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

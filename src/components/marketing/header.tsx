@@ -13,25 +13,24 @@ const navItems = [
 
 export function MarketingHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-gray-900">
+        <Link href="/" className="flex items-center">
           <Image
-            src="/viral-ads-now-icon.png"
+            src="/banner.svg"
             alt="Viral Ads Now"
-            width={36}
+            width={120}
             height={36}
-            className="h-9 w-9 rounded-xl"
+            className="h-9 w-auto rounded-xl"
           />
-          Viral Ads Now
         </Link>
 
-        <nav className="hidden items-center gap-6 text-sm font-medium text-gray-700 lg:flex">
+        <nav className="hidden items-center gap-6 text-sm font-medium text-muted lg:flex">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="transition-colors hover:text-blue-600"
+              className="transition-colors hover:text-brand"
             >
               {item.label}
             </Link>
@@ -39,7 +38,7 @@ export function MarketingHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link href="/auth/signin" className="hidden text-sm font-semibold text-gray-700 sm:inline">
+          <Link href="/auth/signin" className="hidden text-sm font-semibold text-muted transition-colors hover:text-foreground sm:inline">
             Sign in
           </Link>
           <Link href="/auth/signin">

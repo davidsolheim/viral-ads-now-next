@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loading } from '@/components/ui/loading';
+import { Modal } from '@/components/ui/modal';
+import { Input } from '@/components/ui/input';
+import { ContextMenu, useContextMenu } from '@/components/ui/context-menu';
 import toast from 'react-hot-toast';
 
 interface Video {
@@ -26,31 +29,36 @@ export function LibraryClient({ organizationId }: LibraryClientProps) {
   const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [contextVideoId, setContextVideoId] = useState<string | null>(null);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+  const [isArchiving, setIsArchiving] = useState(false);
+  const contextMenu = useContextMenu();
 
-  useEffect(() => {
+  const fetchVideos = useCallback(async () => {
     if (!organizationId) {
       setIsLoading(false);
       return;
     }
-
-    const fetchVideos = async () => {
-      try {
-        const response = await fetch(`/api/videos?organizationId=${organizationId}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch videos');
-        }
-        const data = await response.json();
-        setVideos(data.videos || []);
-      } catch (error) {
-        console.error('Error fetching videos:', error);
-        toast.error('Failed to load videos');
-      } finally {
-        setIsLoading(false);
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/videos?organizationId=${organizationId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch videos');
       }
-    };
-
-    fetchVideos();
+      const data = await response.json();
+      setVideos(data.videos || []);
+    } catch (error) {
+      console.error('Error fetching videos:', error);
+      toast.error('Failed to load videos');
+    } finally {
+      setIsLoading(false);
+    }
   }, [organizationId]);
+
+  useEffect(() => {
+    fetchVideos();
+  }, [fetchVideos]);
 
   const handleDownload = async (video: Video) => {
     setDownloadingId(video.id);
@@ -75,6 +83,52 @@ export function LibraryClient({ organizationId }: LibraryClientProps) {
       toast.error('Failed to download video');
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const handleRename = async () => {
+    const video = videos.find((item) => item.id === contextVideoId);
+    if (!video || !renameValue.trim()) {
+      toast.error('Video name is required');
+      return;
+    }
+    try {
+      const response = await fetch(`/api/projects/${video.projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'rename', name: renameValue.trim() }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to rename video');
+      }
+      toast.success('Video renamed');
+      setIsRenameModalOpen(false);
+      fetchVideos();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to rename video');
+    }
+  };
+
+  const handleArchive = async () => {
+    if (!contextVideoId) return;
+    try {
+      setIsArchiving(true);
+      const response = await fetch(`/api/videos/${contextVideoId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'archive' }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to archive video');
+      }
+      toast.success('Video archived');
+      fetchVideos();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to archive video');
+    } finally {
+      setIsArchiving(false);
     }
   };
 
@@ -140,6 +194,10 @@ export function LibraryClient({ organizationId }: LibraryClientProps) {
             <div
               key={video.id}
               className="group relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md"
+              onContextMenu={(event) => {
+                setContextVideoId(video.id);
+                contextMenu.open(event);
+              }}
             >
               {/* Video Thumbnail */}
               <div className="relative aspect-video bg-gray-100">
@@ -205,6 +263,64 @@ export function LibraryClient({ organizationId }: LibraryClientProps) {
           ))}
         </div>
       )}
+
+      <ContextMenu
+        items={[
+          {
+            id: 'rename',
+            label: 'Rename',
+            onSelect: () => {
+              const video = videos.find((item) => item.id === contextVideoId);
+              if (!video) return;
+              setRenameValue(video.project.name);
+              setIsRenameModalOpen(true);
+            },
+          },
+          {
+            id: 'export',
+            label: 'Export',
+            onSelect: () => {
+              const video = videos.find((item) => item.id === contextVideoId);
+              if (video) {
+                handleDownload(video);
+              }
+            },
+          },
+          {
+            id: 'archive',
+            label: isArchiving ? 'Archiving...' : 'Archive',
+            tone: 'danger',
+            disabled: isArchiving,
+            onSelect: handleArchive,
+          },
+        ]}
+        position={contextMenu.position}
+        onClose={contextMenu.close}
+      />
+
+      <Modal
+        isOpen={isRenameModalOpen}
+        onClose={() => {
+          setIsRenameModalOpen(false);
+        }}
+        title="Rename Video"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Video Name"
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            placeholder="Enter video name"
+            autoFocus
+          />
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsRenameModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRename}>Save</Button>
+          </div>
+        </div>
+      </Modal>
     </main>
   );
 }

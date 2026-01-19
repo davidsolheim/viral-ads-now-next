@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { OrganizationSettingsClient } from '@/components/dashboard/organization-settings-client';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { needsOnboarding } from '@/lib/db-queries';
+import { isSuperAdmin } from '@/lib/admin-utils';
 
 export default async function OrganizationsSettingsPage() {
   const session = await auth();
@@ -16,6 +17,8 @@ export default async function OrganizationsSettingsPage() {
     redirect('/onboarding');
   }
 
+  const userIsSuperAdmin = isSuperAdmin(session.user?.email);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader
@@ -23,6 +26,7 @@ export default async function OrganizationsSettingsPage() {
         userName={session.user?.name || undefined}
         userImage={session.user?.image || null}
         activeOrganizationId={session.user?.activeOrganizationId || null}
+        isSuperAdmin={userIsSuperAdmin}
       />
       <OrganizationSettingsClient userId={session.user.id} activeOrganizationId={session.user?.activeOrganizationId || undefined} />
     </div>

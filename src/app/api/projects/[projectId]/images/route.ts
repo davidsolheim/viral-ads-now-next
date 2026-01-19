@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { 
-  getProject, 
-  getScenesByProject, 
+import { InferSelectModel } from 'drizzle-orm';
+import { scenes } from '@/db/schema/projects';
+import {
+  getProject,
+  getScenesByProject,
   createMediaAsset,
-  updateProjectStep 
+  updateProjectStep,
+  getMediaAssetsByProject,
 } from '@/lib/db-queries';
 import { generateImage } from '@/lib/services/replicate';
 import { uploadFromUrl } from '@/lib/services/wasabi';
 import { trackUsageAndCheckLimits } from '@/lib/middleware/usage-tracking';
 import { z } from 'zod';
 
+type Scene = InferSelectModel<typeof scenes>;
+
 const generateImagesSchema = z.object({
   style: z.enum(['photorealistic', 'artistic', 'cinematic', 'product']).optional(),
+  sceneId: z.string().optional(),
+  prompt: z.string().optional(),
+  model: z.string().optional(),
+  referenceImages: z.array(z.string().url()).optional(),
 });
 
 export async function POST(
@@ -47,8 +56,19 @@ export async function POST(
     const body = await request.json();
     const options = generateImagesSchema.parse(body);
 
+    const targetScenes = options.sceneId
+      ? scenes.filter((scene: Scene) => scene.id === options.sceneId)
+      : scenes;
+
+    if (targetScenes.length === 0) {
+      return NextResponse.json(
+        { error: 'Scene not found. Please generate scenes first.' },
+        { status: 400 }
+      );
+    }
+
     // Check usage limits before generating
-    const imageCount = scenes.length;
+    const imageCount = targetScenes.length;
     const usageCheck = await trackUsageAndCheckLimits({
       organizationId: project.organizationId,
       userId: session.user.id,
@@ -67,11 +87,12 @@ export async function POST(
     }
 
     // Generate images for each scene in parallel
-    const imagePromises = scenes.map(async (scene: any) => {
+    const imagePromises = targetScenes.map(async (scene: any) => {
       try {
+        const prompt = options.prompt || scene.imagePrompt || scene.visualDescription;
         // Generate image using Replicate
         const imageUrl = await generateImage({
-          prompt: scene.visualDescription,
+          prompt,
           style: options.style,
           width: 1024,
           height: 1024,
@@ -97,7 +118,10 @@ export async function POST(
           metadata: {
             sceneNumber: scene.sceneNumber,
             visualDescription: scene.visualDescription,
+            imagePrompt: prompt,
             style: options.style,
+            model: options.model,
+            referenceImages: options.referenceImages,
           },
         });
 
@@ -130,6 +154,35 @@ export async function POST(
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to generate images' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  try {
+    const session = await auth();
+    const { projectId } = await params;
+
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const project = await getProject(projectId);
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const images = await getMediaAssetsByProject(projectId, 'image');
+
+    return NextResponse.json({ images }, { status: 200 });
+  } catch (error) {
+    console.error('Error fetching images:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to fetch images' },
       { status: 500 }
     );
   }

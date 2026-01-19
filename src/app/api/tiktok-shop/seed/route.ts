@@ -78,21 +78,21 @@ export async function POST(request: NextRequest) {
     const rapidAPIResponse = await fetchTrendingProducts(fetchOptions);
 
     // Log response for debugging (remove sensitive data)
+    const isArrayData = Array.isArray(rapidAPIResponse.data);
     console.log('RapidAPI Response:', {
       code: rapidAPIResponse.code,
       msg: rapidAPIResponse.msg,
       hasData: !!rapidAPIResponse.data,
-      listCount: rapidAPIResponse.data?.list?.length || 0,
-      itemsCount: rapidAPIResponse.data?.items?.length || 0,
-      productsCount: rapidAPIResponse.data?.products?.length || 0,
+      isArrayData,
+      listCount: isArrayData ? 0 : ((rapidAPIResponse.data as any)?.list?.length || 0),
+      itemsCount: isArrayData ? 0 : ((rapidAPIResponse.data as any)?.items?.length || 0),
+      productsCount: isArrayData ? 0 : ((rapidAPIResponse.data as any)?.products?.length || 0),
     });
 
     // Handle different response formats: 'list', 'items', 'products', or direct array
-    const productItems = 
-      rapidAPIResponse.data?.list ||  // Actual API uses 'list'
-      rapidAPIResponse.data?.items || 
-      rapidAPIResponse.data?.products || 
-      (Array.isArray(rapidAPIResponse.data) ? rapidAPIResponse.data : []) ||
+    const productItems = Array.isArray(rapidAPIResponse.data)
+      ? rapidAPIResponse.data
+      : rapidAPIResponse.data?.list || rapidAPIResponse.data?.items || rapidAPIResponse.data?.products ||
       (Array.isArray(rapidAPIResponse) ? rapidAPIResponse : []);
 
     if (productItems.length === 0) {
@@ -108,18 +108,18 @@ export async function POST(request: NextRequest) {
             imagesUploaded: 0,
             imagesFailed: 0,
           },
-          message: rapidAPIResponse.message || 'No products found in API response',
+          message: rapidAPIResponse.msg || 'No products found in API response',
           debug: process.env.NODE_ENV === 'development' ? {
             responseStructure: {
               code: rapidAPIResponse.code,
               msg: rapidAPIResponse.msg,
               hasData: !!rapidAPIResponse.data,
-              hasList: !!rapidAPIResponse.data?.list,
-              hasItems: !!rapidAPIResponse.data?.items,
-              hasProducts: !!rapidAPIResponse.data?.products,
+              hasList: !Array.isArray(rapidAPIResponse.data) && !!rapidAPIResponse.data?.list,
+              hasItems: !Array.isArray(rapidAPIResponse.data) && !!rapidAPIResponse.data?.items,
+              hasProducts: !Array.isArray(rapidAPIResponse.data) && !!rapidAPIResponse.data?.products,
               isArray: Array.isArray(rapidAPIResponse.data),
               keys: rapidAPIResponse.data ? Object.keys(rapidAPIResponse.data) : [],
-              listCount: rapidAPIResponse.data?.list?.length || 0,
+              listCount: !Array.isArray(rapidAPIResponse.data) ? (rapidAPIResponse.data?.list?.length || 0) : 0,
             },
           } : undefined,
         },

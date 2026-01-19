@@ -3,7 +3,7 @@
  * Handles file uploads to Wasabi S3-compatible storage
  */
 
-import { S3Client, PutObjectCommand, HeadObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import crypto from 'crypto';
 
@@ -22,6 +22,7 @@ function getS3Client(): S3Client {
         accessKeyId: process.env.WASABI_ACCESS_KEY_ID,
         secretAccessKey: process.env.WASABI_SECRET_ACCESS_KEY,
       },
+      forcePathStyle: true, // Use path-style URLs for Wasabi compatibility
     });
   }
 
@@ -103,10 +104,11 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
 
     await client.send(command);
 
-    const url = `${process.env.WASABI_ENDPOINT}/${bucketName}/${key}`;
+    // Generate a signed URL for temporary access (7 days)
+    const signedUrl = await getPresignedUrl(key, 604800); // 7 days in seconds
 
     return {
-      url,
+      url: signedUrl,
       key,
       size: file.length,
       contentType,
@@ -249,7 +251,7 @@ export async function getPresignedUrl(key: string, expiresIn: number = 3600): Pr
   const client = getS3Client();
 
   try {
-    const command = new PutObjectCommand({
+    const command = new GetObjectCommand({
       Bucket: bucketName,
       Key: key,
     });

@@ -1,0 +1,346 @@
+{
+  "schema_version": "1.0.0",
+  "model_profile": {
+    "name": "P-ImageEdit-class low-cost image edit model",
+    "goal": "Generate photorealistic draft storyboard images for TikTok ads. Output is used for approval and then animated in Kling.",
+    "strengths": [
+      "product-only photography",
+      "flat-lay ingredient/detail scenes",
+      "lifestyle scenes without hands",
+      "wearables and clothing fidelity",
+      "environment and background synthesis",
+      "photorealistic lighting and texture at low cost"
+    ],
+    "limitations": [
+      "cannot reliably enforce real-world scale via text alone",
+      "rigid object in hands often becomes oversized",
+      "exact product geometry replication is inconsistent",
+      "multi-object rigid interactions can drift",
+      "hands are a frequent failure source"
+    ],
+    "hard_avoid_patterns": [
+      {
+        "pattern_id": "rigid_in_hand_full_visibility",
+        "description": "Rigid object fully visible and tightly held in hands with expectation of perfect scale and shape.",
+        "fallbacks": [
+          "use implied-action framing with partial visibility",
+          "hide most of the product body, show only top/edge",
+          "skip draft stage and go directly to Kling",
+          "pre-scale product pixels before inference if available"
+        ]
+      }
+    ]
+  },
+  "global_rules": {
+    "prompt_order": [
+      "photography_style",
+      "scene_description",
+      "subject_description",
+      "action_description",
+      "product_description",
+      "background_description",
+      "lighting_description",
+      "safety_constraints"
+    ],
+    "photorealism_anchors": [
+      "photorealistic",
+      "professional DSLR photography style",
+      "natural lighting",
+      "realistic textures",
+      "shallow depth of field"
+    ],
+    "negative_style_constraints": [
+      "no illustration",
+      "no cartoon",
+      "no CGI",
+      "no animation look",
+      "no stylized rendering"
+    ],
+    "anatomy_safety_constraints": [
+      "correct anatomy",
+      "two arms only",
+      "two hands only",
+      "no extra fingers",
+      "no extra limbs",
+      "no distorted hands",
+      "no duplicated limbs",
+      "no floating hands"
+    ],
+    "product_fidelity_constraints": [
+      "product matches reference exactly in shape, texture, material, and proportions",
+      "no redesign",
+      "no distortion",
+      "no stylization"
+    ],
+    "scale_strategy": {
+      "do_not_use": [
+        "centimeters/inches enforcement",
+        "percentage-of-body math",
+        "small/large language as primary control"
+      ],
+      "use_instead": [
+        "partial occlusion",
+        "action cues",
+        "angle and distance from camera",
+        "depth cues like mist, shadows, reflections"
+      ]
+    },
+    "text_overlay_rules": {
+      "allowed": true,
+      "recommended": {
+        "overlay_type": "bottom_gradient",
+        "text_lines_max": 1,
+        "text_length_max_chars": 22,
+        "position": "bottom",
+        "do_not_cover_product": true
+      },
+      "warnings": [
+        "avoid complex typography",
+        "avoid multiple text blocks",
+        "avoid tiny text",
+        "avoid requiring perfect font replication"
+      ]
+    }
+  },
+  "scene_archetypes": [
+    {
+      "id": "hero_product_shot",
+      "label": "Hero Product Shot",
+      "use_when": [
+        "product-only",
+        "no humans",
+        "clean product presentation"
+      ],
+      "risk_level": "low",
+      "required_constraints": [
+        "global.photorealism_anchors",
+        "global.negative_style_constraints",
+        "global.product_fidelity_constraints"
+      ],
+      "prompt_template": {
+        "photography_style": "A photorealistic premium product photograph in professional DSLR style.",
+        "scene_description": "A {product_name} placed naturally on a {surface_type} with subtle reflections.",
+        "subject_description": "",
+        "action_description": "",
+        "product_description": "The product matches the reference exactly in shape, texture, material, and proportions. No redesign, no distortion.",
+        "background_description": "Clean {background_style} background with minimal props that support the theme without distraction.",
+        "lighting_description": "Soft natural diffused lighting with gentle highlights and realistic shadows. Shallow depth of field.",
+        "safety_constraints": "{global_negative_constraints}."
+      }
+    },
+    {
+      "id": "ingredient_detail_flatlay",
+      "label": "Ingredient or Detail Flat-lay",
+      "use_when": [
+        "show ingredients, materials, textures",
+        "no packaging required",
+        "no humans"
+      ],
+      "risk_level": "low",
+      "required_constraints": [
+        "global.photorealism_anchors",
+        "global.negative_style_constraints"
+      ],
+      "prompt_template": {
+        "photography_style": "A photorealistic flat-lay in professional product photography style.",
+        "scene_description": "An aesthetically arranged set of {ingredients_or_materials} representing the product notes or materials.",
+        "subject_description": "",
+        "action_description": "",
+        "product_description": "No packaging required unless specified. No text.",
+        "background_description": "A clean neutral surface with subtle texture. Background remains secondary.",
+        "lighting_description": "Soft diffused lighting with natural shadows and crisp material texture.",
+        "safety_constraints": "{global_negative_constraints}. No people, no hands."
+      }
+    },
+    {
+      "id": "lifestyle_product_no_humans",
+      "label": "Lifestyle Product Scene Without Humans",
+      "use_when": [
+        "product on vanity, table, shelf",
+        "environment adds mood",
+        "avoid hands and anatomy risks"
+      ],
+      "risk_level": "low",
+      "required_constraints": [
+        "global.photorealism_anchors",
+        "global.negative_style_constraints",
+        "global.product_fidelity_constraints"
+      ],
+      "prompt_template": {
+        "photography_style": "A photorealistic lifestyle product photo in premium advertising style.",
+        "scene_description": "A {product_name} placed in a {environment_type} setting, naturally positioned.",
+        "subject_description": "",
+        "action_description": "",
+        "product_description": "The product matches the reference exactly. No redesign or distortion. Accurate reflections and materials.",
+        "background_description": "{supporting_props} are softly blurred and tasteful, never distracting from the product.",
+        "lighting_description": "Warm diffused natural lighting with shallow depth of field and realistic shadows.",
+        "safety_constraints": "{global_negative_constraints}. No people, no hands."
+      }
+    },
+    {
+      "id": "human_lifestyle_implied_use",
+      "label": "Human Lifestyle Interaction (Implied Use)",
+      "use_when": [
+        "people present",
+        "product is implied or partially visible",
+        "avoid rigid object fully visible in hands"
+      ],
+      "risk_level": "medium",
+      "required_constraints": [
+        "global.photorealism_anchors",
+        "global.negative_style_constraints",
+        "global.anatomy_safety_constraints"
+      ],
+      "prompt_template": {
+        "photography_style": "A photorealistic lifestyle scene in professional DSLR photography style.",
+        "scene_description": "A {setting} scene with a {primary_subject} and {secondary_subject} interacting naturally.",
+        "subject_description": "Natural facial expressions, realistic skin texture, correct anatomy.",
+        "action_description": "{action} with subtle, tasteful body language.",
+        "product_description": "If the product is visible, it should be partially occluded or implied. Avoid hero framing in hands.",
+        "background_description": "Softly blurred environment details that support the mood without distraction.",
+        "lighting_description": "Soft natural lighting with realistic shadows and shallow depth of field.",
+        "safety_constraints": "{global_negative_constraints}. {global_anatomy_constraints}."
+      }
+    },
+    {
+      "id": "wearables_apparel_focus",
+      "label": "Wearables and Apparel Focus",
+      "use_when": [
+        "clothing, sweaters, jewelry worn on body",
+        "print fidelity is critical"
+      ],
+      "risk_level": "low",
+      "required_constraints": [
+        "global.photorealism_anchors",
+        "global.negative_style_constraints",
+        "global.anatomy_safety_constraints",
+        "global.product_fidelity_constraints"
+      ],
+      "prompt_template": {
+        "photography_style": "A photorealistic fashion product photograph in professional DSLR style.",
+        "scene_description": "A model wearing {product_name} in a {mood} environment.",
+        "subject_description": "Medium portrait crop {crop_range}. Natural posture and expression.",
+        "action_description": "{action_optional}. Keep pose simple and stable.",
+        "product_description": "The garment matches the reference exactly in knit texture, fit, silhouette, and print placement. Print must be crisp and undistorted. No redesign.",
+        "background_description": "Soft pastel or neutral background with tasteful decor, softly blurred, not distracting.",
+        "lighting_description": "Warm diffused lighting, gentle highlights, soft shadows emphasizing fabric texture.",
+        "safety_constraints": "{global_negative_constraints}. {global_anatomy_constraints}."
+      }
+    },
+    {
+      "id": "retail_display_scene",
+      "label": "Retail Display and Social Proof",
+      "use_when": [
+        "rack display, cart, boutique setting",
+        "multiple products visible",
+        "social proof signage"
+      ],
+      "risk_level": "low",
+      "required_constraints": [
+        "global.photorealism_anchors",
+        "global.negative_style_constraints",
+        "global.product_fidelity_constraints"
+      ],
+      "prompt_template": {
+        "photography_style": "A photorealistic retail advertising photograph in professional DSLR style.",
+        "scene_description": "A modern boutique display featuring {product_plural} arranged on a {display_type}.",
+        "subject_description": "",
+        "action_description": "",
+        "product_description": "The featured product matches the reference exactly in texture, silhouette, and print. Multiple color variants allowed when appropriate.",
+        "background_description": "Background softly blurred with boutique elements like plants, textured wall, warm wood accents.",
+        "lighting_description": "Soft natural daylight with gentle shadows for depth.",
+        "safety_constraints": "{global_negative_constraints}. If text is required, keep it short and legible."
+      },
+      "optional_text": {
+        "enabled": true,
+        "type": "sign",
+        "text_examples": [
+          "5,500+ sold",
+          "$24.47"
+        ]
+      }
+    },
+    {
+      "id": "cta_overlay_frame",
+      "label": "CTA Text Overlay Frame",
+      "use_when": [
+        "end card",
+        "conversion slide",
+        "single CTA message on image"
+      ],
+      "risk_level": "low",
+      "required_constraints": [
+        "global.photorealism_anchors",
+        "global.negative_style_constraints",
+        "global.product_fidelity_constraints"
+      ],
+      "prompt_template": {
+        "photography_style": "A photorealistic fashion advertising image in professional DSLR style.",
+        "scene_description": "A smiling model wearing {product_name} in a clean lifestyle setting.",
+        "subject_description": "Medium portrait crop from waist to head. Natural friendly expression.",
+        "action_description": "",
+        "product_description": "The product matches the reference exactly. The product remains unobstructed.",
+        "background_description": "Softly blurred modern background, minimal distractions.",
+        "lighting_description": "Soft even diffused lighting with gentle shadows.",
+        "safety_constraints": "{global_negative_constraints}. {global_anatomy_constraints}.",
+        "text_overlay": {
+          "overlay_type": "bottom_gradient",
+          "text": "{cta_text}",
+          "placement": "bottom_center",
+          "notes": "Gradient fades from transparent to slightly darker tone at the bottom. Single line of text, large and legible. Do not cover the product."
+        }
+      }
+    }
+  ],
+  "prompt_builder": {
+    "placeholders": {
+      "product_name": "string",
+      "product_plural": "string",
+      "surface_type": "string",
+      "background_style": "string",
+      "environment_type": "string",
+      "supporting_props": "string",
+      "setting": "string",
+      "primary_subject": "string",
+      "secondary_subject": "string",
+      "action": "string",
+      "action_optional": "string",
+      "mood": "string",
+      "crop_range": "string",
+      "display_type": "string",
+      "cta_text": "string"
+    },
+    "defaults": {
+      "background_style": "clean neutral",
+      "surface_type": "glossy reflective surface",
+      "mood": "warm, inviting, modern",
+      "crop_range": "from chest to head",
+      "cta_text": "Get yours today!"
+    },
+    "global_string_macros": {
+      "global_negative_constraints": "No illustration, no cartoon, no CGI, no animation look, no stylized rendering, no distorted text, no extra logos",
+      "global_anatomy_constraints": "Correct anatomy, two arms only, two hands only, no extra fingers, no extra limbs, no duplicated limbs, no distorted hands"
+    }
+  },
+  "qa_policy": {
+    "auto_reject_if_detected": [
+      "extra hands",
+      "extra arms",
+      "extra fingers",
+      "duplicated limbs",
+      "severely distorted face",
+      "unreadable or mangled CTA text when CTA required",
+      "product redesigned beyond recognition"
+    ],
+    "accept_if": [
+      "photorealistic look",
+      "scene intent is clear",
+      "product is recognizable",
+      "no obvious anatomy errors"
+    ],
+    "notes": [
+      "Draft images do not require perfect geometry or perfect physical scale.",
+      "Kling will handle polish, motion, and final refinement."
+    ]
+  }
+}

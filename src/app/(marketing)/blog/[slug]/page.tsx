@@ -35,14 +35,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <div className="bg-white">
-      <section className="border-b border-gray-100 bg-gray-50">
+      <section className="border-b border-border bg-surface-muted">
         <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-          <Link href="/blog" className="text-sm font-semibold text-blue-600">
+          <Link href="/blog" className="text-sm font-semibold text-brand">
             ← Back to blog
           </Link>
-          <h1 className="mt-4 text-4xl font-bold text-gray-900">{post.title}</h1>
-          <p className="mt-4 text-lg text-gray-600">{post.description}</p>
-          <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-gray-500">
+          <h1 className="mt-4 text-4xl font-bold text-foreground">{post.title}</h1>
+          <p className="mt-4 text-lg text-muted">{post.description}</p>
+          <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-subtle">
             <span>{post.author}</span>
             <span>•</span>
             <span>{new Date(post.date).toLocaleDateString()}</span>
@@ -61,7 +61,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         ) : null}
 
         <article
-          className="blog-content space-y-5 text-base leading-relaxed text-gray-700"
+          className="blog-content space-y-5 text-base leading-relaxed text-muted"
           dangerouslySetInnerHTML={{ __html: post.contentHtml }}
         />
       </section>

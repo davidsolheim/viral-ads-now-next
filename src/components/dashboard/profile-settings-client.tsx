@@ -58,17 +58,17 @@ export function ProfileSettingsClient({
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-foreground">Profile Settings</h1>
+        <p className="mt-2 text-muted">
           Manage your account information and preferences
         </p>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-lg border border-border bg-surface shadow-sm">
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Profile Picture Section */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-medium text-muted">
               Profile Picture
             </label>
             <div className="flex items-center gap-4">
@@ -79,12 +79,12 @@ export function ProfileSettingsClient({
                   className="h-20 w-20 rounded-full object-cover"
                 />
               ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-600 text-2xl font-medium text-white">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand text-2xl font-medium text-white">
                   {(name || email).substring(0, 2).toUpperCase()}
                 </div>
               )}
               <div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted">
                   Profile pictures are managed through your authentication provider (Google, etc.)
                 </p>
               </div>
@@ -104,22 +104,22 @@ export function ProfileSettingsClient({
 
           {/* Email Field (Read-only) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium text-muted">
               Email
             </label>
             <input
               type="email"
               value={email}
               disabled
-              className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-sm text-gray-600 cursor-not-allowed"
+              className="w-full cursor-not-allowed rounded-xl border border-border bg-surface-muted px-4 py-2 text-sm text-muted"
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-subtle">
               Email cannot be changed. It's managed through your authentication provider.
             </p>
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button
               type="button"
               variant="outline"

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { TrendingPageClient } from '@/components/dashboard/trending-page-client';
 import { needsOnboarding } from '@/lib/db-queries';
+import { isSuperAdmin } from '@/lib/admin-utils';
 
 export default async function TrendingCategoryPage({
   params,
@@ -23,6 +24,7 @@ export default async function TrendingCategoryPage({
 
   // Decode category from URL (it might be URL encoded)
   const decodedCategory = decodeURIComponent(category);
+  const userIsSuperAdmin = isSuperAdmin(session.user?.email);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -31,6 +33,7 @@ export default async function TrendingCategoryPage({
         userName={session.user?.name || undefined}
         userImage={session.user?.image || null}
         activeOrganizationId={session.user?.activeOrganizationId || null}
+        isSuperAdmin={userIsSuperAdmin}
       />
       <TrendingPageClient initialPlatform={platform as any} initialCategory={decodedCategory} />
     </div>

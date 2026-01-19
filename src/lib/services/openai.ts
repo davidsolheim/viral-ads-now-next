@@ -28,7 +28,8 @@ interface ExtractedProduct {
 
 export async function extractProductFromUrl(
   content: string,
-  url: string
+  url: string,
+  imageUrls?: string[]
 ): Promise<ExtractedProduct> {
   if (!process.env.TEXT_AI_API_KEY) {
     throw new Error('TEXT_AI_API_KEY is not configured');
@@ -52,10 +53,11 @@ Guidelines:
 - The "benefits" field is REQUIRED and must contain 3-8 benefits. If benefits are not explicitly listed, generate them based on what customers would gain from using this product. Focus on emotional and practical benefits that would be compelling for ad copy.
 - Use the product page content and URL as context.
 - Prefer concise, human-readable values.
-- "images" should include absolute URLs if available.
 - If the product name is unclear, use the page title or a reasonable name derived from the URL.
 - For features: Think about what makes this product stand out - materials, technology, design, functionality, quality, etc.
 - For benefits: Think about what problems this solves for customers - convenience, savings, quality of life, performance, status, etc.
+
+${imageUrls && imageUrls.length > 0 ? `Available images from the page: ${imageUrls.slice(0, 5).join(', ')}` : 'No images found on the page.'}
 
 URL: ${url}
 
@@ -83,7 +85,7 @@ ${content}`;
           },
         ],
         temperature: 0.2,
-        max_tokens: 800,
+        max_tokens: 1200,
         response_format: { type: 'json_object' },
       }),
     });
@@ -105,7 +107,77 @@ ${content}`;
       parsed = JSON.parse(contentJson);
     } catch (parseError) {
       console.error('Failed to parse OpenAI JSON response:', contentJson);
-      throw new Error('Invalid JSON response from OpenAI');
+      console.error('Parse error details:', parseError);
+
+      // Try to extract partial JSON if the response was truncated
+      try {
+        let partialJson = contentJson;
+
+        // If the content ends with an incomplete string or array, try to complete it
+        const openBrackets = (partialJson.match(/\[/g) || []).length;
+        const closeBrackets = (partialJson.match(/\]/g) || []).length;
+        const openBraces = (partialJson.match(/\{/g) || []).length;
+        const closeBraces = (partialJson.match(/\}/g) || []).length;
+
+        // Count quotes to see if we're in the middle of a string
+        const quotes = partialJson.match(/"/g) || [];
+        const isInString = quotes.length % 2 === 1;
+
+        console.log(`JSON structure check - Brackets: ${openBrackets}/${closeBrackets}, Braces: ${openBraces}/${closeBraces}, In string: ${isInString}`);
+
+        // If we're in a string, close it and complete the structure
+        if (isInString) {
+          partialJson += '"';
+        }
+
+        // Close any unclosed arrays
+        for (let i = 0; i < openBrackets - closeBrackets; i++) {
+          partialJson += ']';
+        }
+
+        // Close any unclosed objects
+        for (let i = 0; i < openBraces - closeBraces; i++) {
+          partialJson += '}';
+        }
+
+        console.log('Attempting to parse completed partial JSON:', partialJson.substring(0, 200) + '...');
+        parsed = JSON.parse(partialJson);
+        console.log('Successfully parsed partial JSON');
+
+      } catch (partialParseError) {
+        console.error('Failed to parse partial JSON as well:', partialParseError);
+
+        // Last resort: try to extract just the key fields manually
+        try {
+          console.log('Attempting manual field extraction...');
+
+          // Extract name
+          const nameMatch = contentJson.match(/"name"\s*:\s*"([^"]*)"/);
+          const name = nameMatch ? nameMatch[1] : 'Unknown Product';
+
+          // Extract description
+          const descMatch = contentJson.match(/"description"\s*:\s*"([^"]*)"/);
+          const description = descMatch ? descMatch[1] : '';
+
+          // Use fallback values for other fields
+          parsed = {
+            name,
+            description,
+            price: '',
+            originalPrice: '',
+            currency: 'USD',
+            features: ['High quality', 'Modern design', 'Great value'],
+            benefits: ['Improves daily life', 'Saves time', 'Reliable performance'],
+            images: []
+          };
+
+          console.log('Successfully created fallback product data');
+
+        } catch (fallbackError) {
+          console.error('Fallback extraction also failed:', fallbackError);
+          throw new Error('Invalid JSON response from OpenAI');
+        }
+      }
     }
 
     // Ensure name is present - extract from URL as fallback if missing
@@ -130,7 +202,7 @@ ${content}`;
         'Great value',
       ];
     }
-    
+
     if (!parsed.benefits || parsed.benefits.length === 0) {
       console.warn('OpenAI response missing benefits, generating fallbacks');
       parsed.benefits = [
@@ -139,6 +211,28 @@ ${content}`;
         'Great value for money',
         'Reliable and trustworthy',
       ];
+    }
+
+    // Handle images: use provided image URLs if AI didn't extract any or extracted placeholders
+    if (imageUrls && imageUrls.length > 0) {
+      // If AI returned placeholder/example URLs, replace with real ones
+      const hasRealImages = parsed.images && parsed.images.some(img =>
+        !img.includes('example.com') && !img.includes('placeholder')
+      );
+
+      if (!parsed.images || parsed.images.length === 0 || !hasRealImages) {
+        console.log('Using extracted image URLs instead of AI-generated ones');
+        parsed.images = imageUrls.slice(0, 5); // Limit to 5 images
+      } else {
+        // Merge AI-extracted images with provided ones, preferring AI's selection but filling gaps
+        const mergedImages = [...parsed.images];
+        for (const url of imageUrls.slice(0, 5)) {
+          if (!mergedImages.includes(url) && mergedImages.length < 5) {
+            mergedImages.push(url);
+          }
+        }
+        parsed.images = mergedImages;
+      }
     }
 
     return parsed;
@@ -481,7 +575,7 @@ Return as JSON:
  */
 export async function generateScriptCandidates(
   options: ScriptGenerationOptions,
-  count: number = 2
+  count: number = 6
 ): Promise<string[]> {
   const candidates: string[] = [];
   
@@ -789,4 +883,91 @@ The index should be 0-based (0 for first candidate, 1 for second, etc.)`;
     // Fallback to first candidate on error
     return 0;
   }
+}
+
+/**
+ * Enhance a prompt using AI to make it more detailed and effective
+ */
+export async function enhancePrompt(
+  prompt: string,
+  type: 'image' | 'video',
+  context?: {
+    productName?: string;
+    script?: string;
+    sceneNumber?: number;
+  }
+): Promise<string> {
+  if (!process.env.TEXT_AI_API_KEY) {
+    throw new Error('TEXT_AI_API_KEY is not configured');
+  }
+
+  const maxLength = type === 'image' ? 300 : 500;
+  const typeDescription = type === 'image' 
+    ? 'image generation (photorealistic, detailed, visually striking)'
+    : 'video animation (dynamic, engaging, cinematic motion)';
+
+  const contextInfo = context
+    ? `\n\nContext:\n${context.productName ? `Product: ${context.productName}` : ''}${context.sceneNumber ? `\nScene: ${context.sceneNumber}` : ''}${context.script ? `\nScript excerpt: ${context.script.substring(0, 200)}` : ''}`
+    : '';
+
+  const systemPrompt = `You are an expert ${type === 'image' ? 'visual artist and photographer' : 'video director and cinematographer'}. Your task is to enhance prompts to be more detailed, specific, and effective for AI ${typeDescription}.`;
+
+  const userPrompt = `Enhance the following prompt for ${typeDescription}. Make it more detailed, specific, and visually compelling while keeping it under ${maxLength} characters.
+
+Original prompt: ${prompt}${contextInfo}
+
+Return only the enhanced prompt, nothing else. Keep it concise but detailed.`;
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.TEXT_AI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', // Use cheaper model for prompt enhancement
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content: userPrompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 200,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    const enhanced = data.choices[0]?.message?.content?.trim();
+
+    if (!enhanced) {
+      throw new Error('No enhanced prompt generated');
+    }
+
+    // Ensure it's within the character limit
+    return enhanced.length > maxLength ? enhanced.substring(0, maxLength) : enhanced;
+  } catch (error) {
+    console.error('Error enhancing prompt:', error);
+    throw error;
+  }
+}
+
+/**
+ * Enhance a prompt with a DeepSeek-like system (alias of enhancePrompt)
+ */
+export async function enhancePromptDeepSeek(
+  prompt: string,
+  context?: { productName?: string; script?: string; sceneNumber?: number }
+): Promise<string> {
+  return enhancePrompt(prompt, 'image', context);
 }

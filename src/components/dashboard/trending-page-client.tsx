@@ -60,7 +60,7 @@ export function TrendingPageClient({
   return (
     <>
       {/* Tabs Navigation */}
-      <div className="border-b border-gray-200 bg-white">
+      <div className="border-b border-border bg-surface">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             {platforms.map((platform) => (
@@ -75,13 +75,13 @@ export function TrendingPageClient({
                 }}
                 className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
                   activeTab === platform.id
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    ? 'border-brand text-brand'
+                    : 'border-transparent text-subtle hover:border-border hover:text-foreground'
                 }`}
               >
                 {platform.name}
                 {platform.id !== 'tiktok' && (
-                  <span className="ml-1 text-xs text-gray-400">(Coming soon)</span>
+                  <span className="ml-1 text-xs text-subtle">(Coming soon)</span>
                 )}
               </button>
             ))}

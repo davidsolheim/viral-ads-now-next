@@ -90,25 +90,25 @@ export function OrganizationInvitationPage({ token, userId }: OrganizationInvita
   const isExpired = invitationData.expiresAt && new Date(invitationData.expiresAt) < new Date();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
+    <div className="min-h-screen flex items-center justify-center bg-surface-muted py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full rounded-lg border border-border bg-surface p-6 shadow-md">
         <div className="text-center mb-6">
-          <div className="mx-auto h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-100">
+            <svg className="h-6 w-6 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900">Organization Invitation</h2>
+          <h2 className="text-xl font-semibold text-foreground">Organization Invitation</h2>
         </div>
 
         <div className="mb-6">
-          <p className="text-gray-600 mb-2">
+          <p className="mb-2 text-muted">
             You've been invited to join <strong>{invitationData.organization?.name}</strong>
           </p>
-          <div className="bg-gray-50 rounded-md p-3 text-sm">
-            <p className="text-gray-700">Role: <span className="font-medium capitalize">{invitationData.role}</span></p>
+          <div className="rounded-md bg-surface-muted p-3 text-sm">
+            <p className="text-muted">Role: <span className="font-medium capitalize text-foreground">{invitationData.role}</span></p>
             {invitationData.expiresAt && (
-              <p className={`mt-1 ${isExpired ? 'text-red-600' : 'text-gray-600'}`}>
+              <p className={`mt-1 ${isExpired ? 'text-red-600' : 'text-muted'}`}>
                 Expires: {new Date(invitationData.expiresAt).toLocaleDateString()}
                 {isExpired && ' (Expired)'}
               </p>

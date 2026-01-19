@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getProject, needsOnboarding } from '@/lib/db-queries';
 import { ProjectWizard } from '@/components/wizard/project-wizard';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
+import { isSuperAdmin } from '@/lib/admin-utils';
 
 export default async function ProjectPage({
   params,
@@ -29,13 +30,16 @@ export default async function ProjectPage({
 
   // TODO: Check if user has access to this project's organization
 
+  const userIsSuperAdmin = isSuperAdmin(session.user?.email);
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-muted">
       <DashboardHeader
         userEmail={session.user?.email || undefined}
         userName={session.user?.name || undefined}
         userImage={session.user?.image || null}
         activeOrganizationId={session.user?.activeOrganizationId || null}
+        isSuperAdmin={userIsSuperAdmin}
       />
       <ProjectWizard project={project} />
     </div>

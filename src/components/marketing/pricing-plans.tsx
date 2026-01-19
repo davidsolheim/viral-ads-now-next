@@ -51,14 +51,14 @@ export function PricingPlans({ activeOrganizationId }: PricingPlansProps) {
 
   return (
     <>
-      <section className="border-b border-gray-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <section className="border-b border-border bg-gradient-to-br from-brand-50 via-white to-surface-muted">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">Pricing</p>
-            <h1 className="mt-3 text-4xl font-bold text-gray-900">
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand">Pricing</p>
+            <h1 className="mt-3 text-4xl font-bold text-foreground">
               Subscription plans plus pay-per-use flexibility.
             </h1>
-            <p className="mt-4 text-lg text-gray-600">
+            <p className="mt-4 text-lg text-muted">
               Start on a monthly plan and add extra video credits when your campaigns scale.
             </p>
           </div>
@@ -69,8 +69,8 @@ export function PricingPlans({ activeOrganizationId }: PricingPlansProps) {
               onClick={() => setBilling('monthly')}
               className={`rounded-full px-4 py-2 text-sm font-semibold ${
                 billing === 'monthly'
-                  ? 'bg-blue-600 text-white'
-                  : 'border border-gray-200 text-gray-600'
+                  ? 'bg-brand text-white'
+                  : 'border border-border text-muted'
               }`}
             >
               Monthly
@@ -80,8 +80,8 @@ export function PricingPlans({ activeOrganizationId }: PricingPlansProps) {
               onClick={() => setBilling('annual')}
               className={`rounded-full px-4 py-2 text-sm font-semibold ${
                 billing === 'annual'
-                  ? 'bg-blue-600 text-white'
-                  : 'border border-gray-200 text-gray-600'
+                  ? 'bg-brand text-white'
+                  : 'border border-border text-muted'
               }`}
             >
               Annual
@@ -99,24 +99,24 @@ export function PricingPlans({ activeOrganizationId }: PricingPlansProps) {
             <div
               key={plan.name}
               className={`rounded-2xl border p-6 shadow-sm ${
-                plan.highlight ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'
+                plan.highlight ? 'border-brand bg-brand-50' : 'border-border bg-white'
               }`}
             >
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">{plan.name}</h2>
+                <h2 className="text-lg font-semibold text-foreground">{plan.name}</h2>
                 {plan.highlight && (
-                  <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
+                  <span className="rounded-full bg-brand px-3 py-1 text-xs font-semibold text-white">
                     Most popular
                   </span>
                 )}
               </div>
-              <p className="mt-3 text-sm text-gray-600">{plan.description}</p>
-              <p className="mt-6 text-4xl font-bold text-gray-900">
+              <p className="mt-3 text-sm text-muted">{plan.description}</p>
+              <p className="mt-6 text-4xl font-bold text-foreground">
                 ${plan.price}
-                <span className="text-base font-medium text-gray-500">/mo</span>
+                <span className="text-base font-medium text-subtle">/mo</span>
               </p>
-              <p className="mt-2 text-sm text-gray-600">{plan.videos}</p>
-              <ul className="mt-6 space-y-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-muted">{plan.videos}</p>
+              <ul className="mt-6 space-y-2 text-sm text-muted">
                 {plan.features.map((feature) => (
                   <li key={feature}>• {feature}</li>
                 ))}

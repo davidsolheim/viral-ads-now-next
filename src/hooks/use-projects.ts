@@ -8,14 +8,15 @@ interface Project {
   creatorId: string;
   currentStep: string;
   settings: any;
-  createdAt: Date;
-  updatedAt: Date | null;
+  createdAt: Date | string;
+  updatedAt: Date | string | null;
 }
 
 interface CreateProjectData {
   name: string;
   organizationId: string;
   productUrl?: string;
+  flowType?: 'manual' | 'automatic';
 }
 
 export function useProjects(organizationId?: string) {
@@ -71,6 +72,7 @@ export function useGenerateScript(projectId: string) {
       style?: 'conversational' | 'energetic' | 'professional' | 'casual';
       duration?: number;
       platform?: 'tiktok' | 'instagram' | 'youtube';
+      specialRequest?: string;
     }) => {
       const response = await fetch(`/api/projects/${projectId}/script`, {
         method: 'POST',
@@ -87,7 +89,6 @@ export function useGenerateScript(projectId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      toast.success('Script generated successfully!');
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -190,11 +191,13 @@ export function useGenerateVoiceover(projectId: string) {
   return useMutation({
     mutationFn: async (options?: {
       scriptId?: string;
-      voice?: 'male-1' | 'male-2' | 'female-1' | 'female-2' | 'female-3';
+      voice?: string;
       speed?: number;
       pitch?: number;
       volume?: number;
       emotion?: 'neutral' | 'happy' | 'sad' | 'angry' | 'fearful' | 'disgusted' | 'surprised';
+      voiceType?: 'preset' | 'clone';
+      cloneSampleUrl?: string;
     }) => {
       const response = await fetch(`/api/projects/${projectId}/voiceover`, {
         method: 'POST',
@@ -248,7 +251,7 @@ export function useAutoGenerate(projectId: string) {
   });
 }
 
-export function useGenerateStoryboards(projectId: string) {
+export function useGenerateConcepts(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -257,7 +260,7 @@ export function useGenerateStoryboards(projectId: string) {
       duration: number;
       aspectRatio: 'portrait' | 'landscape' | 'square';
     }) => {
-      const response = await fetch(`/api/projects/${projectId}/storyboards`, {
+      const response = await fetch(`/api/projects/${projectId}/concepts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(options),
@@ -265,7 +268,7 @@ export function useGenerateStoryboards(projectId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to generate storyboards');
+        throw new Error(error.error || 'Failed to generate concepts');
       }
 
       return response.json();
@@ -278,6 +281,9 @@ export function useGenerateStoryboards(projectId: string) {
     },
   });
 }
+
+// Legacy alias for backward compatibility (can be removed later)
+export const useGenerateStoryboards = useGenerateConcepts;
 
 // Note: useCompileVideo hook removed - video compilation is now handled client-side
 // in the compile-step component using FFmpeg.wasm

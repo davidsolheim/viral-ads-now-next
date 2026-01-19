@@ -29,14 +29,14 @@ const responseTimes = [
 export default function ContactPage() {
   return (
     <div className="bg-white">
-      <section className="border-b border-gray-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <section className="border-b border-border bg-gradient-to-br from-brand-50 via-white to-surface-muted">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">Contact</p>
-            <h1 className="mt-3 text-4xl font-bold text-gray-900">
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand">Contact</p>
+            <h1 className="mt-3 text-4xl font-bold text-foreground">
               Let us help you launch your next TikTok ad.
             </h1>
-            <p className="mt-4 text-lg text-gray-600">
+            <p className="mt-4 text-lg text-muted">
               Tell us about your goals, product catalog, and creative volume. We will recommend the
               fastest path to scale winning ads.
             </p>
@@ -51,26 +51,26 @@ export default function ContactPage() {
               </Link>
             </div>
           </div>
-          <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-xl">
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+          <div className="rounded-3xl border border-brand/30 bg-surface p-6 shadow-xl">
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand">
               Response times
             </p>
-            <h2 className="mt-3 text-2xl font-bold text-gray-900">Fast support, every day.</h2>
-            <p className="mt-3 text-sm text-gray-600">
+            <h2 className="mt-3 text-2xl font-bold text-foreground">Fast support, every day.</h2>
+            <p className="mt-3 text-sm text-muted">
               Our team is optimized for speed so you can keep campaigns moving.
             </p>
             <div className="mt-6 space-y-4">
               {responseTimes.map((item) => (
                 <div
                   key={item.label}
-                  className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3"
+                  className="flex items-center justify-between rounded-2xl border border-border bg-surface-muted px-4 py-3"
                 >
-                  <span className="text-sm text-gray-600">{item.label}</span>
-                  <span className="text-sm font-semibold text-gray-900">{item.value}</span>
+                  <span className="text-sm text-muted">{item.label}</span>
+                  <span className="text-sm font-semibold text-foreground">{item.value}</span>
                 </div>
               ))}
             </div>
-            <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+            <div className="mt-6 rounded-2xl border border-border bg-surface-muted px-4 py-3 text-sm text-muted">
               We also offer private Slack channels for enterprise teams.
             </div>
           </div>
@@ -80,16 +80,16 @@ export default function ContactPage() {
       <section className="bg-white">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_0.9fr] lg:px-8">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">Send a note</p>
-            <h2 className="mt-3 text-3xl font-bold text-gray-900">
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand">Send a note</p>
+            <h2 className="mt-3 text-3xl font-bold text-foreground">
               Tell us about your creative goals.
             </h2>
-            <p className="mt-4 text-gray-600">
+            <p className="mt-4 text-muted">
               Share your product catalog size, target markets, and expected ad volume. We will
               follow up with a tailored plan.
             </p>
             <form
-              className="mt-8 grid gap-5 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm"
+              className="mt-8 grid gap-5 rounded-3xl border border-border bg-surface p-6 shadow-sm"
               action="mailto:hello@viraladsnow.com"
               method="post"
             >
@@ -101,19 +101,19 @@ export default function ContactPage() {
               <Input label="Company" name="company" placeholder="Brand name" />
               <Input label="Monthly creative volume" name="volume" placeholder="50+ videos" />
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-900" htmlFor="message">
+                <label className="mb-1 block text-sm font-medium text-foreground" htmlFor="message">
                   Project details
                 </label>
                 <textarea
                   id="message"
                   name="message"
                   rows={5}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="block w-full rounded-xl border border-border px-3 py-2 text-sm text-foreground shadow-sm transition-colors placeholder:text-subtle focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
                   placeholder="Tell us about your products, goals, and timeline."
                 />
               </div>
               <div className="flex flex-wrap items-center justify-between gap-4">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-subtle">
                   By submitting, you agree to receive emails about your request.
                 </p>
                 <Button type="submit">Send request</Button>
@@ -122,24 +122,24 @@ export default function ContactPage() {
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-3xl border border-gray-200 bg-gray-50 p-6">
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+            <div className="rounded-3xl border border-border bg-surface-muted p-6">
+              <p className="text-sm font-semibold uppercase tracking-wide text-brand">
                 Contact options
               </p>
               <div className="mt-6 space-y-4">
                 {contactOptions.map((option) => (
-                  <div key={option.title} className="rounded-2xl border border-gray-200 bg-white p-4">
-                    <h3 className="text-lg font-semibold text-gray-900">{option.title}</h3>
-                    <p className="mt-2 text-sm text-gray-600">{option.description}</p>
-                    <p className="mt-3 text-sm font-semibold text-blue-600">{option.detail}</p>
+                  <div key={option.title} className="rounded-2xl border border-border bg-surface p-4">
+                    <h3 className="text-lg font-semibold text-foreground">{option.title}</h3>
+                    <p className="mt-2 text-sm text-muted">{option.description}</p>
+                    <p className="mt-3 text-sm font-semibold text-brand">{option.detail}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-3xl border border-blue-100 bg-blue-50 p-6">
-              <h3 className="text-2xl font-bold text-gray-900">Prefer a quick call?</h3>
-              <p className="mt-3 text-sm text-gray-700">
+            <div className="rounded-3xl border border-brand/30 bg-brand-50 p-6">
+              <h3 className="text-2xl font-bold text-foreground">Prefer a quick call?</h3>
+              <p className="mt-3 text-sm text-muted">
                 We can walk through your creative goals, benchmarks, and rollout plan in 20
                 minutes.
               </p>
@@ -153,20 +153,20 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-gray-200 bg-white p-6">
-              <h3 className="text-lg font-semibold text-gray-900">Trusted by fast-growing brands</h3>
-              <p className="mt-3 text-sm text-gray-600">
+            <div className="rounded-3xl border border-border bg-surface p-6">
+              <h3 className="text-lg font-semibold text-foreground">Trusted by fast-growing brands</h3>
+              <p className="mt-3 text-sm text-muted">
                 Teams use Viral Ads Now to move from product link to TikTok-ready ad without
                 slowing down growth.
               </p>
               <div className="mt-4 grid gap-3">
-                <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                <div className="rounded-2xl border border-border bg-surface-muted px-4 py-3 text-sm text-muted">
                   Average time to publish: under 5 minutes
                 </div>
-                <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                <div className="rounded-2xl border border-border bg-surface-muted px-4 py-3 text-sm text-muted">
                   Script + scene generation included
                 </div>
-                <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                <div className="rounded-2xl border border-border bg-surface-muted px-4 py-3 text-sm text-muted">
                   Creative variants ready to test
                 </div>
               </div>

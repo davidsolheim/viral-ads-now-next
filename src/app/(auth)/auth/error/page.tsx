@@ -17,8 +17,8 @@ export default async function AuthErrorPage({
   const errorMessage = error ? errorMessages[error] || errorMessages.Default : errorMessages.Default;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg text-center">
+    <div className="flex min-h-screen items-center justify-center bg-surface-muted">
+      <div className="w-full max-w-md space-y-8 rounded-2xl border border-border bg-surface p-8 text-center shadow-lg">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
           <svg
             className="h-6 w-6 text-red-600"
@@ -34,11 +34,11 @@ export default async function AuthErrorPage({
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Authentication Error</h1>
-        <p className="text-gray-600">{errorMessage}</p>
+        <h1 className="text-2xl font-bold text-foreground">Authentication Error</h1>
+        <p className="text-muted">{errorMessage}</p>
         <Link
           href="/auth/signin"
-          className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="inline-block rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
         >
           Back to Sign In
         </Link>

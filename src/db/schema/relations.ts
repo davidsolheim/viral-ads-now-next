@@ -113,7 +113,7 @@ export const invitationsRelations = relations(invitations, ({ one }) => ({
 export const projectsRelations = relations(projects, ({ many, one }) => ({
   organization: one(organizations, { fields: [projects.organizationId], references: [organizations.id] }),
   creator: one(users, { fields: [projects.creatorId], references: [users.id], relationName: 'projectsCreated' }),
-  products: many(products),
+  product: one(products, { fields: [projects.productId], references: [products.id] }),
   scripts: many(scripts),
   scenes: many(scenes),
   mediaAssets: many(mediaAssets),
@@ -129,8 +129,13 @@ export const projectsRelations = relations(projects, ({ many, one }) => ({
   abTests: many(abTests),
 }));
 
-export const productsRelations = relations(products, ({ one }) => ({
-  project: one(projects, { fields: [products.projectId], references: [projects.id] }),
+export const productsRelations = relations(products, ({ many, one }) => ({
+  user: one(users, { fields: [products.userId], references: [users.id] }),
+  organization: one(organizations, {
+    fields: [products.organizationId],
+    references: [organizations.id],
+  }),
+  projects: many(projects),
 }));
 
 export const scriptsRelations = relations(scripts, ({ many, one }) => ({

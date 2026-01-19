@@ -33,8 +33,8 @@ export function OrganizationSettingsClient({ userId, activeOrganizationId }: Org
   const getRoleBadge = (role: string) => {
     const colors = {
       owner: 'bg-purple-100 text-purple-800',
-      admin: 'bg-blue-100 text-blue-800',
-      member: 'bg-gray-100 text-gray-800',
+      admin: 'bg-brand-100 text-brand-700',
+      member: 'bg-surface-alt text-muted',
     };
     return colors[role as keyof typeof colors] || colors.member;
   };
@@ -52,8 +52,8 @@ export function OrganizationSettingsClient({ userId, activeOrganizationId }: Org
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Organization Settings</h2>
-        <p className="mt-1 text-sm text-gray-600">
+        <h2 className="text-2xl font-bold text-foreground">Organization Settings</h2>
+        <p className="mt-1 text-sm text-muted">
           Manage your organizations, members, and invitations
         </p>
       </div>
@@ -61,9 +61,9 @@ export function OrganizationSettingsClient({ userId, activeOrganizationId }: Org
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Organizations List */}
         <div className="lg:col-span-1">
-          <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <div className="rounded-lg border border-border bg-surface p-4">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">My Organizations</h3>
+              <h3 className="text-lg font-semibold text-foreground">My Organizations</h3>
               <Button
                 size="sm"
                 onClick={() => setIsCreateModalOpen(true)}
@@ -84,13 +84,13 @@ export function OrganizationSettingsClient({ userId, activeOrganizationId }: Org
                     onClick={() => handleSelectOrg(org.organization.id)}
                     className={`w-full rounded-md p-3 text-left transition-colors ${
                       selectedOrgId === org.organization.id
-                        ? 'bg-blue-50 border border-blue-200'
-                        : 'border border-gray-200 hover:bg-gray-50'
+                        ? 'bg-brand-50 border border-brand/30'
+                        : 'border border-border hover:bg-surface-muted'
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-900 truncate">
+                        <div className="font-medium text-foreground truncate">
                           {org.organization.name}
                         </div>
                         <div className="mt-1 flex items-center gap-2">
@@ -100,7 +100,7 @@ export function OrganizationSettingsClient({ userId, activeOrganizationId }: Org
                         </div>
                       </div>
                       {org.organization.id === activeOrganizationId && (
-                        <span className="ml-2 text-xs font-medium text-blue-600">Active</span>
+                        <span className="ml-2 text-xs font-medium text-brand">Active</span>
                       )}
                     </div>
                     {org.organization.id !== activeOrganizationId && (
@@ -109,7 +109,7 @@ export function OrganizationSettingsClient({ userId, activeOrganizationId }: Org
                           e.stopPropagation();
                           handleSwitchOrg(org.organization.id);
                         }}
-                        className="mt-2 text-xs text-blue-600 hover:text-blue-700"
+                        className="mt-2 text-xs text-brand hover:text-brand-700"
                       >
                         Switch to this organization
                       </button>
@@ -118,7 +118,7 @@ export function OrganizationSettingsClient({ userId, activeOrganizationId }: Org
                 ))}
               </div>
             ) : (
-              <div className="py-8 text-center text-sm text-gray-500">
+              <div className="py-8 text-center text-sm text-subtle">
                 <p>No organizations yet</p>
                 <Button
                   size="sm"
@@ -142,9 +142,9 @@ export function OrganizationSettingsClient({ userId, activeOrganizationId }: Org
               userId={userId}
             />
           ) : (
-            <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
+            <div className="rounded-lg border border-border bg-surface p-12 text-center">
               <svg
-                className="mx-auto h-12 w-12 text-gray-400"
+                className="mx-auto h-12 w-12 text-subtle"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -156,8 +156,8 @@ export function OrganizationSettingsClient({ userId, activeOrganizationId }: Org
                   d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                 />
               </svg>
-              <h3 className="mt-4 text-lg font-medium text-gray-900">Select an organization</h3>
-              <p className="mt-2 text-sm text-gray-600">
+              <h3 className="mt-4 text-lg font-medium text-foreground">Select an organization</h3>
+              <p className="mt-2 text-sm text-muted">
                 Choose an organization from the list to view and manage its details
               </p>
             </div>

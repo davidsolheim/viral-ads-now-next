@@ -15,6 +15,7 @@ interface DashboardHeaderProps {
   userName?: string;
   userImage?: string | null;
   activeOrganizationId?: string | null;
+  isSuperAdmin?: boolean;
 }
 
 export function DashboardHeader({
@@ -22,18 +23,25 @@ export function DashboardHeader({
   userName,
   userImage,
   activeOrganizationId,
+  isSuperAdmin = false,
 }: DashboardHeaderProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState(false);
   const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
   const pathname = usePathname();
 
-  const navItems = [
+  const baseNavItems = [
     { href: '/dashboard', label: 'Projects' },
+    { href: '/dashboard/products', label: 'Products' },
     { href: '/dashboard/library', label: 'Library' },
     { href: '/dashboard/trending', label: 'Trending' },
-    { href: '/dashboard/admin/rapidapi-seed', label: 'Admin' },
   ];
+
+  const adminNavItems = [
+    { href: '/dashboard/admin', label: 'Admin' },
+  ];
+
+  const navItems = isSuperAdmin ? [...baseNavItems, ...adminNavItems] : [...baseNavItems];
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/auth/signin' });
@@ -62,31 +70,31 @@ export function DashboardHeader({
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
+      <header className="sticky top-0 z-40 border-b border-border bg-surface">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
             <Link href="/dashboard" className="flex flex-shrink-0 items-center gap-2 cursor-pointer">
               <Image
-                src="/viral-ads-now-icon.png"
+                src="/icon.svg"
                 alt="Viral Ads Now"
                 width={32}
                 height={32}
                 className="h-8 w-8 rounded-xl"
               />
-              <h1 className="text-xl font-bold text-gray-900">Viral Ads Now</h1>
+              <h1 className="text-xl font-bold text-foreground">Viral Ads Now</h1>
             </Link>
 
             {/* Navigation */}
-            <nav className="hidden md:flex items-center gap-4">
+            <nav className="hidden items-center gap-4 md:flex">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={`text-sm font-medium transition-colors cursor-pointer ${
                     isActive(item.href)
-                      ? 'text-gray-900'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'text-foreground'
+                      : 'text-muted hover:text-foreground'
                   }`}
                 >
                   {item.label}
@@ -98,7 +106,7 @@ export function DashboardHeader({
             <div className="relative">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-gray-100 cursor-pointer"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-muted cursor-pointer"
               >
                 {userImage ? (
                   <Image
@@ -109,22 +117,22 @@ export function DashboardHeader({
                     className="h-8 w-8 rounded-full"
                   />
                 ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-medium text-white">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-sm font-medium text-white">
                     {getInitials(userName, userEmail)}
                   </div>
                 )}
                 <div className="hidden sm:block">
                   {userName && (
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-foreground">
                       {userName}
                     </div>
                   )}
-                  <div className={`text-xs text-gray-500 ${userName ? '' : 'text-sm font-medium text-gray-900'}`}>
+                  <div className={`text-xs text-subtle ${userName ? '' : 'text-sm font-medium text-foreground'}`}>
                     {userEmail}
                   </div>
                 </div>
                 <svg
-                  className={`h-4 w-4 text-gray-500 transition-transform ${
+                  className={`h-4 w-4 text-subtle transition-transform ${
                     isUserMenuOpen ? 'rotate-180' : ''
                   }`}
                   fill="none"
@@ -146,9 +154,9 @@ export function DashboardHeader({
                     className="fixed inset-0 z-10"
                     onClick={() => setIsUserMenuOpen(false)}
                   />
-                  <div className="absolute right-0 z-20 mt-2 w-80 rounded-lg border border-gray-200 bg-white shadow-lg">
+                  <div className="absolute right-0 z-20 mt-2 w-80 rounded-xl border border-border bg-surface shadow-xl">
                     {/* User Info Section */}
-                    <div className="border-b border-gray-200 p-4">
+                    <div className="border-b border-border p-4">
                       <div className="flex items-center gap-3">
                         {userImage ? (
                           <Image
@@ -159,22 +167,22 @@ export function DashboardHeader({
                             className="h-10 w-10 rounded-full"
                           />
                         ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-medium text-white">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-sm font-medium text-white">
                             {getInitials(userName, userEmail)}
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-semibold text-gray-900 truncate">
+                          <div className="text-sm font-semibold text-foreground truncate">
                             {userName || 'User'}
                           </div>
-                          <div className="text-xs text-gray-500 truncate">{userEmail}</div>
+                          <div className="text-xs text-subtle truncate">{userEmail}</div>
                         </div>
                       </div>
                     </div>
 
                     {/* Organization Switcher Section */}
-                    <div className="border-b border-gray-200 p-4">
-                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    <div className="border-b border-border p-4">
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-subtle">
                         Organization
                       </div>
                       <OrganizationSwitcher
@@ -187,7 +195,7 @@ export function DashboardHeader({
                           setIsUserMenuOpen(false);
                           setIsCreateOrgModalOpen(true);
                         }}
-                        className="mt-2 w-full rounded-md px-3 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 cursor-pointer"
+                        className="mt-2 w-full rounded-md px-3 py-2 text-left text-sm text-brand hover:bg-brand-50 cursor-pointer"
                       >
                         <div className="flex items-center gap-2">
                           <svg
@@ -213,10 +221,10 @@ export function DashboardHeader({
                       <Link
                         href="/settings/profile"
                         onClick={() => setIsUserMenuOpen(false)}
-                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 cursor-pointer"
+                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-surface-alt cursor-pointer"
                       >
                         <svg
-                          className="h-5 w-5 text-gray-400"
+                          className="h-5 w-5 text-subtle"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -235,10 +243,10 @@ export function DashboardHeader({
                           setIsUserMenuOpen(false);
                           setIsReferralModalOpen(true);
                         }}
-                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 cursor-pointer"
+                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-surface-alt cursor-pointer"
                       >
                         <svg
-                          className="h-5 w-5 text-gray-400"
+                          className="h-5 w-5 text-subtle"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -255,10 +263,10 @@ export function DashboardHeader({
                       <Link
                         href="/settings/organizations"
                         onClick={() => setIsUserMenuOpen(false)}
-                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 cursor-pointer"
+                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-surface-alt cursor-pointer"
                       >
                         <svg
-                          className="h-5 w-5 text-gray-400"
+                          className="h-5 w-5 text-subtle"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -280,10 +288,10 @@ export function DashboardHeader({
                       </Link>
                       <button
                         onClick={handleSignOut}
-                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 cursor-pointer"
+                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-surface-alt cursor-pointer"
                       >
                         <svg
-                          className="h-5 w-5 text-gray-400"
+                          className="h-5 w-5 text-subtle"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"

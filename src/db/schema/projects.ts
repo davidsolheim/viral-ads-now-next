@@ -9,6 +9,7 @@ import {
   jsonb,
   pgEnum,
   foreignKey,
+  index,
 } from 'drizzle-orm/pg-core';
 import { createId } from '@paralleldrive/cuid2';
 import { organizations } from './organizations';
@@ -39,7 +40,7 @@ export const adStyleEnum = pgEnum('ad_style', [
 export const projectStepEnum = pgEnum('project_step', [
   'product',
   'style',
-  'storyboard',
+  'concept',
   'script',
   'scenes',
   'images',
@@ -66,7 +67,9 @@ export const projects = pgTable('projects', {
   creatorId: varchar('creatorId', { length: 255 })
     .notNull()
     .references(() => users.id),
-  productId: varchar('productId', { length: 255 }),
+  productId: varchar('productId', { length: 255 }).references(() => products.id, {
+    onDelete: 'set null',
+  }),
   productUrl: text('productUrl'),
   adStyle: adStyleEnum('adStyle'),
   currentStep: projectStepEnum('currentStep').notNull().default('product'),
@@ -100,28 +103,39 @@ export const captions = pgTable('captions', {
 });
 
 // Products table
-export const products = pgTable('products', {
-  id: varchar('id', { length: 255 })
-    .primaryKey()
-    .$defaultFn(() => createId()),
-  projectId: varchar('projectId', { length: 255 })
-    .notNull()
-    .references(() => projects.id, { onDelete: 'cascade' }),
-  name: varchar('name', { length: 255 }).notNull(),
-  description: text('description'),
-  price: decimal('price', { precision: 10, scale: 2 }),
-  originalPrice: decimal('originalPrice', { precision: 10, scale: 2 }),
-  currency: varchar('currency', { length: 10 }).default('USD'),
-  category: varchar('category', { length: 255 }),
-  soldCount: integer('soldCount'),
-  images: jsonb('images'), // Array of image URLs
-  features: jsonb('features'), // Array of text features
-  benefits: jsonb('benefits'), // Array of text benefits
-  url: text('url'),
-  createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
-  updatedAt: timestamp('updatedAt', { mode: 'date' }).$onUpdate(() => new Date()),
-  deletedAt: timestamp('deletedAt', { mode: 'date' }),
-});
+export const products = pgTable(
+  'products',
+  {
+    id: varchar('id', { length: 255 })
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    userId: varchar('userId', { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    organizationId: varchar('organizationId', { length: 255 }).references(() => organizations.id, {
+      onDelete: 'set null',
+    }),
+    name: varchar('name', { length: 255 }).notNull(),
+    description: text('description'),
+    price: decimal('price', { precision: 10, scale: 2 }),
+    originalPrice: decimal('originalPrice', { precision: 10, scale: 2 }),
+    currency: varchar('currency', { length: 10 }).default('USD'),
+    category: varchar('category', { length: 255 }),
+    soldCount: integer('soldCount'),
+    images: jsonb('images'), // Array of image URLs
+    features: jsonb('features'), // Array of text features
+    benefits: jsonb('benefits'), // Array of text benefits
+    url: text('url'),
+    createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' }).$onUpdate(() => new Date()),
+    deletedAt: timestamp('deletedAt', { mode: 'date' }),
+  },
+  (table) => ({
+    userIdUrlIdx: index('products_user_id_url_idx').on(table.userId, table.url),
+    userIdIdx: index('products_user_id_idx').on(table.userId),
+    organizationIdIdx: index('products_organization_id_idx').on(table.organizationId),
+  })
+);
 
 // Scripts table
 export const scripts = pgTable('scripts', {

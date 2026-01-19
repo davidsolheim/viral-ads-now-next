@@ -249,7 +249,7 @@ export const VIDEO_SPECS: VideoSpecs = {
       max: 14460, // 241 minutes
       recommended: [5, 15, 30, 120],
     },
-    formats: ['mp4', 'mov', 'gif'],
+    formats: ['mp4', 'mov'],
     aspectRatios: [
       { ratio: '1:1', preferred: true },
       { ratio: '4:5', preferred: true }, // mobile-only

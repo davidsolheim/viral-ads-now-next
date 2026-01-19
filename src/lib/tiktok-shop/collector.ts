@@ -69,6 +69,11 @@ class TikTokShopCollector {
     const hostname = window.location.hostname;
     const pathname = window.location.pathname;
 
+    // Exclude dashboard pages to prevent collecting wrong URLs
+    if (pathname.includes('/dashboard')) {
+      return false;
+    }
+
     // TikTok Shop URLs typically contain:
     // - shop.tiktok.com
     // - www.tiktok.com/@.../video/... (may feature products)

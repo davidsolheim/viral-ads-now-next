@@ -11,6 +11,7 @@ const createProjectSchema = z.object({
   name: z.string().min(1).max(255),
   organizationId: z.string(),
   productUrl: z.string().url().optional(),
+  flowType: z.enum(['manual', 'automatic']).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -40,6 +41,7 @@ export async function POST(request: NextRequest) {
       organizationId: validatedData.organizationId,
       creatorId: session.user.id,
       productUrl: validatedData.productUrl,
+      flowType: validatedData.flowType,
     });
 
     return NextResponse.json({ project }, { status: 201 });

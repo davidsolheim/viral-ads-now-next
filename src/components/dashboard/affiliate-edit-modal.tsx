@@ -243,15 +243,15 @@ export function AffiliateEditModal({ isOpen, onClose, referrerId }: AffiliateEdi
                                     alt={referral.referredUser.name || 'User'}
                                   />
                                 ) : (
-                                  <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium mr-2">
+                                  <div className="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-brand text-xs font-medium text-white">
                                     {(referral.referredUser?.name || referral.referredUser?.email || 'U').charAt(0).toUpperCase()}
                                   </div>
                                 )}
                                 <div>
-                                  <div className="text-sm font-medium text-gray-900">
+                                  <div className="text-sm font-medium text-foreground">
                                     {referral.referredUser?.name || 'Unknown'}
                                   </div>
-                                  <div className="text-xs text-gray-500">
+                                  <div className="text-xs text-subtle">
                                     {referral.referredUser?.email || 'N/A'}
                                   </div>
                                 </div>
@@ -263,17 +263,17 @@ export function AffiliateEditModal({ isOpen, onClose, referrerId }: AffiliateEdi
                                   referral.status === 'pending'
                                     ? 'bg-yellow-100 text-yellow-800'
                                     : referral.status === 'claimed'
-                                    ? 'bg-blue-100 text-blue-800'
+                                    ? 'bg-brand-100 text-brand-700'
                                     : 'bg-green-100 text-green-800'
                                 }`}
                               >
                                 {referral.status}
                               </span>
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-foreground">
                               {referral.rewardCreditAmount || 0}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-subtle">
                               {new Date(referral.createdAt).toLocaleDateString()}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">

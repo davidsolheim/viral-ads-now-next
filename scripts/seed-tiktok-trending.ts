@@ -87,14 +87,16 @@ async function seedTikTokTrending(options: SeedOptions = {}) {
         order_by,
         order_type,
         country,
-        limit,
+        limit: limit || 20, // New API uses per_page instead of limit
       };
 
       // Fetch trending products from RapidAPI
       const rapidAPIResponse = await fetchTrendingProducts(fetchOptions);
 
-      // Handle both 'items' and 'products' response formats
-      const productItems = rapidAPIResponse.data?.items || rapidAPIResponse.data?.products || [];
+      // Handle 'list', 'items', and 'products' response formats
+      const productItems = Array.isArray(rapidAPIResponse.data)
+        ? rapidAPIResponse.data
+        : rapidAPIResponse.data?.list || rapidAPIResponse.data?.items || rapidAPIResponse.data?.products || [];
 
       if (productItems.length === 0) {
         console.log(`   No more items found on page ${page}. Stopping.`);
@@ -159,7 +161,11 @@ async function seedTikTokTrending(options: SeedOptions = {}) {
       console.log('');
 
       // Check if there are more pages
-      if (!rapidAPIResponse.data.pagination?.hasMore) {
+      const hasMore = Array.isArray(rapidAPIResponse.data)
+        ? false // Arrays don't have pagination info
+        : rapidAPIResponse.data?.pagination?.hasMore ?? false;
+
+      if (!hasMore) {
         console.log('   No more pages available. Stopping.');
         break;
       }

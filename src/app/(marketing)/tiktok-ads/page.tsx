@@ -61,7 +61,7 @@ export default function TikTokAdsPage() {
                 <Button size="lg">Start free trial</Button>
               </Link>
               <Link href="/pricing">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+                <Button size="lg" variant="outline" className="border-white bg-transparent text-white hover:bg-white/10">
                   See pricing
                 </Button>
               </Link>
@@ -74,39 +74,39 @@ export default function TikTokAdsPage() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-2">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+              <p className="text-sm font-semibold uppercase tracking-wide text-brand">
                 TikTok best practices baked in
               </p>
-              <h2 className="mt-3 text-3xl font-bold text-gray-900">
+              <h2 className="mt-3 text-3xl font-bold text-foreground">
                 Built for how TikTok audiences actually watch.
               </h2>
-              <p className="mt-4 text-gray-600">
+              <p className="mt-4 text-muted">
                 Our AI is trained on high-performing TikTok creative patterns, so your ads feel
                 native to the For You page.
               </p>
-              <ul className="mt-6 space-y-4 text-sm text-gray-600">
+              <ul className="mt-6 space-y-4 text-sm text-muted">
                 {bestPractices.map((practice) => (
                   <li key={practice.title}>
-                    <p className="font-semibold text-gray-900">{practice.title}</p>
+                    <p className="font-semibold text-foreground">{practice.title}</p>
                     <p className="mt-1">{practice.description}</p>
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="rounded-3xl border border-gray-200 bg-gray-50 p-6">
-              <p className="text-xs font-semibold uppercase text-gray-500">Sample ad flow</p>
+            <div className="rounded-3xl border border-border bg-surface-muted p-6">
+              <p className="text-xs font-semibold uppercase text-subtle">Sample ad flow</p>
               <div className="mt-4 space-y-3">
-                <div className="rounded-xl bg-white px-4 py-3 text-sm text-gray-700 shadow-sm">
+                <div className="rounded-xl bg-surface px-4 py-3 text-sm text-muted shadow-sm">
                   Hook: “Why do 9/10 serums fail? We fixed it.”
                 </div>
-                <div className="rounded-xl bg-white px-4 py-3 text-sm text-gray-700 shadow-sm">
+                <div className="rounded-xl bg-surface px-4 py-3 text-sm text-muted shadow-sm">
                   Proof: “Clinical test: 87% saw brighter skin in 7 days.”
                 </div>
-                <div className="rounded-xl bg-white px-4 py-3 text-sm text-gray-700 shadow-sm">
+                <div className="rounded-xl bg-surface px-4 py-3 text-sm text-muted shadow-sm">
                   CTA: “Tap to claim your starter kit today.”
                 </div>
               </div>
-              <p className="mt-6 text-sm text-gray-600">
+              <p className="mt-6 text-sm text-muted">
                 Complete scripts, scenes, and captions generated instantly.
               </p>
             </div>
@@ -114,18 +114,18 @@ export default function TikTokAdsPage() {
         </div>
       </section>
 
-      <section className="bg-gray-50">
+      <section className="bg-surface-muted">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">Success stories</p>
-          <h2 className="mt-3 text-3xl font-bold text-gray-900">
+          <p className="text-sm font-semibold uppercase tracking-wide text-brand">Success stories</p>
+          <h2 className="mt-3 text-3xl font-bold text-foreground">
             TikTok sellers scaling faster with Viral Ads Now.
           </h2>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {successStories.map((story) => (
-              <div key={story.brand} className="rounded-2xl border border-gray-200 bg-white p-6">
-                <p className="text-sm font-semibold text-gray-900">{story.brand}</p>
-                <p className="mt-3 text-2xl font-bold text-blue-600">{story.result}</p>
-                <p className="mt-2 text-sm text-gray-600">{story.detail}</p>
+              <div key={story.brand} className="rounded-2xl border border-border bg-surface p-6">
+                <p className="text-sm font-semibold text-foreground">{story.brand}</p>
+                <p className="mt-3 text-2xl font-bold text-brand">{story.result}</p>
+                <p className="mt-2 text-sm text-muted">{story.detail}</p>
               </div>
             ))}
           </div>
@@ -134,12 +134,12 @@ export default function TikTokAdsPage() {
 
       <section className="bg-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">Coming soon</p>
-            <h2 className="mt-3 text-3xl font-bold text-gray-900">
+          <div className="rounded-3xl border border-border bg-surface p-8 shadow-sm">
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand">Coming soon</p>
+            <h2 className="mt-3 text-3xl font-bold text-foreground">
               More e-commerce channels on the way.
             </h2>
-            <p className="mt-4 text-gray-600">
+            <p className="mt-4 text-muted">
               We are expanding beyond TikTok to support additional placements for e-commerce teams,
               agencies, and creators.
             </p>
@@ -147,7 +147,7 @@ export default function TikTokAdsPage() {
               {comingSoon.map((channel) => (
                 <span
                   key={channel}
-                  className="rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-700"
+                  className="rounded-full border border-border bg-surface-muted px-4 py-2 text-sm text-muted"
                 >
                   {channel}
                 </span>
@@ -157,10 +157,10 @@ export default function TikTokAdsPage() {
         </div>
       </section>
 
-      <section className="bg-blue-600">
+      <section className="bg-brand">
         <div className="mx-auto max-w-6xl px-4 py-16 text-center text-white sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold sm:text-4xl">Ready to win TikTok in 2026?</h2>
-          <p className="mt-4 text-blue-100">
+          <p className="mt-4 text-brand-100">
             Get your first TikTok ad live today with AI-generated creative.
           </p>
           <Link href="/auth/signin">
