@@ -310,7 +310,7 @@ export async function POST(
     });
 
     const videoResults: any[] = [];
-    const videoModel = settings.video_model || 'kling-v2-5';
+    const videoModel = settings.video_model || 'kling-v2-6';
     for (const scene of scenes) {
       const sceneImage = imageResults.find((img) => img.sceneId === scene.id)?.asset;
       if (!sceneImage) {

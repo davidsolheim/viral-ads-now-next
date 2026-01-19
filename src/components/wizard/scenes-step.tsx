@@ -33,6 +33,7 @@ const VIDEO_MODELS = [
   { id: 'veo-3-1-fast', name: 'Veo 3.1 Fast' },
   { id: 'seedance-pro', name: 'Seedance Pro' },
   { id: 'kling-v2-5', name: 'Kling V2.5' },
+  { id: 'kling-v2-6', name: 'Kling V2.6 (7¢/sec)' },
   { id: 'kling-video-o1', name: 'Kling Video O1' },
 ];
 
@@ -40,7 +41,7 @@ export function ScenesStep({ projectId, onNext, readOnly = false }: ScenesStepPr
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [targetScenes, setTargetScenes] = useState(4);
   const [imageModel, setImageModel] = useState<string>('flux-2-flex');
-  const [videoModel, setVideoModel] = useState<string>('kling-v2-5');
+  const [videoModel, setVideoModel] = useState<string>('kling-v2-6');
   const [enhancingPrompt, setEnhancingPrompt] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   

@@ -59,7 +59,7 @@ export async function POST(
     }
 
     const prompt = options.prompt || (scene.metadata as any)?.videoPrompt || scene.visualDescription;
-    const model = options.model || 'kling-v2-5';
+    const model = options.model || 'kling-v2-6';
 
     const isKling = model.includes('kling');
     const videoUrl = isKling

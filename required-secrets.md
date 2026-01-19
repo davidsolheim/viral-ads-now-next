@@ -17,7 +17,8 @@ RESEND_FROM_EMAIL='your-email@example.com'
 # AI Services
 TEXT_AI_API_KEY='your_openai_api_key'
 IMAGE_AI_API_KEY='your_replicate_token'
-VIDEO_AI_API_KEY='your_kling_api_key'  # For Kling video generation
+VIDEO_AI_API_KEY='your_kling_api_key'  # For Kling video generation (legacy)
+FAL_API_KEY='your_fal_ai_api_key'  # For Kling 2.6 video generation through fal.ai
 REPLICATE_IMAGE_MODEL_VERSION=your_version_id_here
 
 # Storage
@@ -38,6 +39,17 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY='your_stripe_publishable_key'
 
 # RapidAPI
 RAPID_API_KEY='your_rapidapi_key_here'
+
+# Social Media OAuth (for social posting feature)
+# TikTok
+TIKTOK_CLIENT_ID='your_tiktok_client_id'
+TIKTOK_CLIENT_SECRET='your_tiktok_client_secret'
+# Instagram
+INSTAGRAM_CLIENT_ID='your_instagram_client_id'
+INSTAGRAM_CLIENT_SECRET='your_instagram_client_secret'
+# YouTube
+YOUTUBE_CLIENT_ID='your_youtube_client_id'
+YOUTUBE_CLIENT_SECRET='your_youtube_client_secret'
 
 # Super Admin (comma-separated emails for admin access)
 SUPER_ADMIN_EMAILS='admin@example.com,superadmin@example.com'

@@ -45,6 +45,7 @@ export function SocialStep({ projectId, onNext, readOnly = false }: SocialStepPr
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
+  const [postingErrors, setPostingErrors] = useState<Record<string, string>>({});
 
   const loadAccounts = async () => {
     try {
@@ -60,14 +61,12 @@ export function SocialStep({ projectId, onNext, readOnly = false }: SocialStepPr
 
   const loadPosts = async () => {
     try {
-      // Note: This API doesn't exist yet, but following the PRD it should
-      const response = await fetch(`/api/projects/${projectId}/social/posts`);
+      const response = await fetch(`/api/projects/${projectId}/social/post`);
       if (response.ok) {
         const data = await response.json();
         setPosts(data.posts || []);
       }
     } catch (error) {
-      // Posts API doesn't exist yet, so this is expected
       console.error('Error loading posts:', error);
     }
   };
@@ -76,266 +75,290 @@ export function SocialStep({ projectId, onNext, readOnly = false }: SocialStepPr
     Promise.all([loadAccounts(), loadPosts()]).finally(() => setIsLoading(false));
   }, [projectId]);
 
-  const handleConnectAccount = async (platform: string) => {
+  const handleConnectPlatform = async (platform: string) => {
     try {
-      // This would typically redirect to OAuth flow
-      // For now, we'll simulate the connection
-      const response = await fetch(`/api/projects/${projectId}/social/accounts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ platform }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to connect account');
-      }
-
-      const data = await response.json();
-      setAccounts(prev => [...prev, data.account]);
-      toast.success(`Connected to ${platforms.find(p => p.id === platform)?.name}`);
+      // Redirect to OAuth authorization URL
+      const { getAuthorizationUrl } = await import('@/lib/social-oauth');
+      const authUrl = getAuthorizationUrl(platform, `project=${projectId}`);
+      window.location.href = authUrl;
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to connect account');
+      console.error('Error initiating OAuth flow:', error);
+      toast.error('Failed to connect account. Please try again.');
     }
   };
 
-  const handlePostNow = async () => {
+  const handleCreatePosts = async () => {
     if (selectedPlatforms.length === 0) {
       toast.error('Please select at least one platform');
       return;
     }
 
+    const activeAccounts = accounts.filter(account =>
+      selectedPlatforms.includes(account.platform) && account.isActive
+    );
+
+    if (activeAccounts.length === 0) {
+      toast.error('No active accounts found for selected platforms');
+      return;
+    }
+
     setIsPosting(true);
+    setPostingErrors({});
+
     try {
       const scheduledAt = scheduledDate && scheduledTime
         ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString()
-        : null;
+        : undefined;
 
-      const response = await fetch(`/api/projects/${projectId}/social/post`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          platforms: selectedPlatforms,
-          scheduledAt,
-        }),
+      const results = await Promise.allSettled(
+        activeAccounts.map(async (account) => {
+          try {
+            const response = await fetch(`/api/projects/${projectId}/social/post`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                socialAccountId: account.id,
+                platform: account.platform,
+                scheduledAt,
+              }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(errorData.error || `Failed to create post for ${account.platform}`);
+            }
+
+            return await response.json();
+          } catch (error) {
+            throw { platform: account.platform, error };
+          }
+        })
+      );
+
+      const errors: Record<string, string> = {};
+      let successCount = 0;
+
+      results.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          successCount++;
+        } else {
+          const { platform, error } = result.reason;
+          errors[platform] = error instanceof Error ? error.message : 'Unknown error';
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to schedule post');
-      }
+      setPostingErrors(errors);
 
-      toast.success(scheduledAt ? 'Post scheduled successfully!' : 'Post published successfully!');
-      onNext();
+      if (successCount > 0) {
+        await loadPosts(); // Refresh posts list
+        if (successCount === activeAccounts.length) {
+          toast.success(`Posts ${scheduledAt ? 'scheduled' : 'created'} successfully!`);
+          onNext();
+        } else {
+          toast.success(`${successCount} posts ${scheduledAt ? 'scheduled' : 'created'} successfully. ${Object.keys(errors).length} failed.`);
+        }
+      } else {
+        toast.error('All posts failed to create. Please check the errors below.');
+      }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to post');
+      console.error('Error creating posts:', error);
+      toast.error('An unexpected error occurred while creating posts');
     } finally {
       setIsPosting(false);
     }
   };
 
-  const handlePlatformToggle = (platformId: string) => {
-    setSelectedPlatforms(prev =>
-      prev.includes(platformId)
-        ? prev.filter(p => p !== platformId)
-        : [...prev, platformId]
-    );
-  };
-
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <Loading size="lg" text="Loading social media settings..." />
+        <Loading size="lg" text="Loading social accounts..." />
       </div>
     );
   }
 
-  if (readOnly) {
-    return (
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">Social Media</h2>
-        <p className="mt-2 text-muted">Social media posting configuration.</p>
-        <div className="mt-6 space-y-4">
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <div className="text-sm font-medium text-foreground">Connected Accounts</div>
-            <div className="mt-2 space-y-2">
-              {accounts.length > 0 ? (
-                accounts.map(account => (
-                  <div key={account.id} className="flex items-center justify-between">
-                    <span className="text-sm text-foreground">
-                      {platforms.find(p => p.id === account.platform)?.name} - {account.accountName}
-                    </span>
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      account.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+  const connectedPlatforms = accounts.filter(account => account.isActive).map(account => account.platform);
+  const disconnectedPlatforms = platforms.filter(platform => !connectedPlatforms.includes(platform.id));
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold text-foreground">Social Media Posting</h2>
+      <p className="mt-2 text-muted">Connect your accounts and schedule posts across multiple platforms.</p>
+
+      <div className="mt-6 space-y-6">
+        {/* Connected Accounts */}
+        {accounts.filter(account => account.isActive).length > 0 && (
+          <div>
+            <h3 className="text-lg font-medium text-foreground mb-3">Connected Accounts</h3>
+            <div className="grid gap-3">
+              {accounts.filter(account => account.isActive).map((account) => (
+                <div key={account.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      platforms.find(p => p.id === account.platform)?.color
                     }`}>
-                      {account.isActive ? 'Active' : 'Inactive'}
-                    </span>
+                      {account.platform}
+                    </div>
+                    <div>
+                      <div className="font-medium">{account.accountName}</div>
+                      <div className="text-sm text-muted">@{account.accountId}</div>
+                    </div>
                   </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted">No accounts connected</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-green-600">Connected</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Connect New Accounts */}
+        {disconnectedPlatforms.length > 0 && (
+          <div>
+            <h3 className="text-lg font-medium text-foreground mb-3">Connect Accounts</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {disconnectedPlatforms.map((platform) => (
+                <button
+                  key={platform.id}
+                  onClick={() => handleConnectPlatform(platform.id)}
+                  className={`p-4 border border-border rounded-lg hover:border-brand transition-colors text-left ${
+                    readOnly ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={readOnly}
+                >
+                  <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium mb-2 ${platform.color}`}>
+                    {platform.name}
+                  </div>
+                  <div className="text-sm text-muted">
+                    Connect your {platform.name.toLowerCase()} account
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Post Scheduling */}
+        {accounts.filter(account => account.isActive).length > 0 && (
+          <div>
+            <h3 className="text-lg font-medium text-foreground mb-3">Create Posts</h3>
+
+            <div className="space-y-4">
+              {/* Platform Selection */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Select Platforms
+                </label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {accounts.filter(account => account.isActive).map((account) => (
+                    <label key={account.id} className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-surface-muted">
+                      <input
+                        type="checkbox"
+                        checked={selectedPlatforms.includes(account.platform)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedPlatforms(prev => [...prev, account.platform]);
+                          } else {
+                            setSelectedPlatforms(prev => prev.filter(p => p !== account.platform));
+                          }
+                        }}
+                        className="rounded"
+                        disabled={readOnly}
+                      />
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${platforms.find(p => p.id === account.platform)?.color}`}>
+                        {account.platform}
+                      </div>
+                      <span className="text-sm">{account.accountName}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Scheduling */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Schedule Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-border rounded-lg"
+                    min={new Date().toISOString().split('T')[0]}
+                    disabled={readOnly}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Schedule Time (Optional)
+                  </label>
+                  <input
+                    type="time"
+                    value={scheduledTime}
+                    onChange={(e) => setScheduledTime(e.target.value)}
+                    className="w-full px-3 py-2 border border-border rounded-lg"
+                    disabled={readOnly}
+                  />
+                </div>
+              </div>
+
+              <Button
+                onClick={handleCreatePosts}
+                disabled={selectedPlatforms.length === 0 || isPosting || readOnly}
+                className="w-full"
+              >
+                {isPosting ? 'Creating Posts...' : scheduledDate && scheduledTime ? 'Schedule Posts' : 'Post Now'}
+              </Button>
+
+              {/* Error Display */}
+              {Object.keys(postingErrors).length > 0 && (
+                <div className="mt-4 p-4 border border-red-200 bg-red-50 rounded-lg">
+                  <h4 className="text-sm font-medium text-red-800 mb-2">Posting Errors:</h4>
+                  <ul className="text-sm text-red-700 space-y-1">
+                    {Object.entries(postingErrors).map(([platform, error]) => (
+                      <li key={platform}>
+                        <strong>{platform}:</strong> {error}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
           </div>
+        )}
 
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <div className="text-sm font-medium text-foreground">Scheduled Posts</div>
-            <div className="mt-2 space-y-2">
-              {posts.length > 0 ? (
-                posts.map(post => (
-                  <div key={post.id} className="flex items-center justify-between">
-                    <span className="text-sm text-foreground">
-                      {platforms.find(p => p.id === post.platform)?.name}
-                    </span>
-                    <span className={`px-2 py-1 rounded text-xs ${
+        {/* Existing Posts */}
+        {posts.length > 0 && (
+          <div>
+            <h3 className="text-lg font-medium text-foreground mb-3">Scheduled Posts</h3>
+            <div className="space-y-3">
+              {posts.map((post) => (
+                <div key={post.id} className="p-4 border border-border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${platforms.find(p => p.id === post.platform)?.color}`}>
+                      {post.platform}
+                    </div>
+                    <div className={`px-2 py-1 rounded-full text-xs ${
                       post.status === 'published' ? 'bg-green-100 text-green-800' :
                       post.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
                       post.status === 'failed' ? 'bg-red-100 text-red-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
                       {post.status}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted">No posts scheduled</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <h2 className="text-2xl font-bold text-foreground">Social Media</h2>
-      <p className="mt-2 text-muted">
-        Connect your social media accounts and schedule posts for your video.
-      </p>
-
-      <div className="mt-6 space-y-6">
-        {/* Connected Accounts */}
-        <div>
-          <h3 className="text-lg font-medium text-foreground mb-4">Connected Accounts</h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {platforms.map(platform => {
-              const connectedAccount = accounts.find(acc => acc.platform === platform.id);
-              return (
-                <div key={platform.id} className="rounded-xl border border-border bg-surface p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className={`px-3 py-1 rounded text-sm font-medium ${platform.color}`}>
-                      {platform.name}
                     </div>
-                    {connectedAccount && (
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        connectedAccount.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {connectedAccount.isActive ? 'Connected' : 'Inactive'}
-                      </span>
-                    )}
                   </div>
-                  {connectedAccount ? (
-                    <div className="text-sm text-foreground">
-                      @{connectedAccount.accountName}
+                  {post.scheduledAt && (
+                    <div className="text-sm text-muted">
+                      Scheduled: {new Date(post.scheduledAt).toLocaleString()}
                     </div>
-                  ) : (
-                    <Button
-                      onClick={() => handleConnectAccount(platform.id)}
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                    >
-                      Connect Account
-                    </Button>
                   )}
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Posting Options */}
-        <div>
-          <h3 className="text-lg font-medium text-foreground mb-4">Post to Platforms</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-foreground">Select Platforms</label>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                {platforms.map(platform => {
-                  const isConnected = accounts.some(acc => acc.platform === platform.id && acc.isActive);
-                  return (
-                    <label
-                      key={platform.id}
-                      className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        selectedPlatforms.includes(platform.id)
-                          ? 'border-brand bg-brand-50'
-                          : 'border-border hover:border-border-strong'
-                      } ${!isConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedPlatforms.includes(platform.id)}
-                        onChange={() => handlePlatformToggle(platform.id)}
-                        disabled={!isConnected}
-                        className="h-4 w-4 border-border text-brand focus:ring-brand/30"
-                      />
-                      <div className={`px-2 py-1 rounded text-xs font-medium ${platform.color}`}>
-                        {platform.name}
-                      </div>
-                      {!isConnected && (
-                        <span className="text-xs text-muted">Not connected</span>
-                      )}
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Scheduling */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Schedule Date (Optional)
-                </label>
-                <input
-                  type="date"
-                  value={scheduledDate}
-                  onChange={(e) => setScheduledDate(e.target.value)}
-                  className="block w-full rounded-xl border border-border px-3 py-2 text-sm text-foreground shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Schedule Time (Optional)
-                </label>
-                <input
-                  type="time"
-                  value={scheduledTime}
-                  onChange={(e) => setScheduledTime(e.target.value)}
-                  className="block w-full rounded-xl border border-border px-3 py-2 text-sm text-foreground shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                />
-              </div>
+              ))}
             </div>
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <Button
-            onClick={handlePostNow}
-            disabled={isPosting || selectedPlatforms.length === 0}
-          >
-            {isPosting
-              ? 'Publishing...'
-              : scheduledDate && scheduledTime
-                ? 'Schedule Post'
-                : 'Post Now'
-            }
-          </Button>
-          <Button variant="outline" onClick={onNext}>
-            Skip for Now
-          </Button>
-        </div>
+        )}
       </div>
     </div>
   );

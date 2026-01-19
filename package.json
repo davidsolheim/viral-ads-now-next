@@ -18,6 +18,7 @@
     "@auth/drizzle-adapter": "^1.11.1",
     "@aws-sdk/client-s3": "^3.971.0",
     "@aws-sdk/s3-request-presigner": "^3.971.0",
+    "@fal-ai/client": "^1.8.3",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@hookform/resolvers": "^5.2.2",

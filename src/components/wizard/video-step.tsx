@@ -31,6 +31,7 @@ const VIDEO_MODELS = [
   { id: 'veo-3-1-fast', name: 'Veo 3.1 Fast' },
   { id: 'seedance-pro', name: 'Seedance Pro' },
   { id: 'kling-v2-5', name: 'Kling V2.5' },
+  { id: 'kling-v2-6', name: 'Kling V2.6 (7¢/sec)' },
   { id: 'kling-video-o1', name: 'Kling Video O1' },
 ];
 
@@ -128,7 +129,7 @@ export function VideoStep({ projectId, onNext, readOnly = false }: VideoStepProp
         body: JSON.stringify({
           sceneId: scene.id,
           prompt: videoPromptByScene[scene.id] || '',
-          model: modelByScene[scene.id] || 'kling-v2-5',
+          model: modelByScene[scene.id] || 'kling-v2-6',
         }),
       });
 
@@ -245,7 +246,7 @@ export function VideoStep({ projectId, onNext, readOnly = false }: VideoStepProp
                     Video Model
                   </label>
                   <select
-                    value={modelByScene[scene.id] || 'kling-v2-5'}
+                    value={modelByScene[scene.id] || 'kling-v2-6'}
                     onChange={(e) =>
                       setModelByScene((prev) => ({ ...prev, [scene.id]: e.target.value }))
                     }

@@ -31,7 +31,8 @@ A modern Next.js 16 application for instant viral video ad generation. Transform
 - **LLM**: OpenAI API (script generation)
 - **TTS**: Replicate (voiceover generation)
 - **Video Rendering**: Shotstack API
-- **Image/Video Generation**: Kling AI or Replicate
+- **Image/Video Generation**: Kling AI (via fal.ai for cost optimization) or Replicate
+- **fal.ai**: Kling 2.6 video generation at 7¢/second (audio disabled for cost savings)
 
 ## Getting Started
 
@@ -180,7 +181,8 @@ See `.env.example` for a complete list of required environment variables.
 - `WASABI_*`: Wasabi storage credentials
 - `TEXT_AI_API_KEY`: OpenAI API key for text generation
 - `IMAGE_AI_API_KEY`: Replicate API token for image generation
-- `VIDEO_AI_API_KEY`: Kling API key for video generation
+- `VIDEO_AI_API_KEY`: Kling API key for video generation (legacy)
+- `FAL_API_KEY`: fal.ai API key for Kling 2.6 video generation (recommended for cost savings)
 
 ## Contributing
 

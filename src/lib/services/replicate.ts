@@ -412,12 +412,26 @@ export async function animateVideo(options: VideoGenerationOptions): Promise<str
   return videoUrl;
 }
 
+import { generateKlingVideoFal } from './fal';
+
 /**
  * Generate a video clip using Kling model
+ * Supports both legacy Replicate-based Kling models and fal.ai-based Kling 2.6
  */
 export async function generateKlingVideo(options: VideoGenerationOptions): Promise<string> {
   const { imageUrl, prompt = '', model } = options;
 
+  // Use fal.ai for Kling 2.6 models (cheaper pricing: 7¢/second vs 10¢/second with audio disabled)
+  if (model === 'kling-v2-6') {
+    return generateKlingVideoFal({
+      imageUrl,
+      prompt,
+      duration: '5', // Default to 5 seconds for cost optimization
+      generateAudio: false, // Disable audio to save 3¢ per second
+    });
+  }
+
+  // Legacy Kling models via Replicate
   if (!process.env.IMAGE_AI_API_KEY) {
     throw new Error('IMAGE_AI_API_KEY is not configured');
   }

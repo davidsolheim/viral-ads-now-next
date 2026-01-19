@@ -28,6 +28,9 @@ import {
   tiktokShopEngagement,
   tiktokShopRefreshQueue,
   referrals,
+  socialAccounts,
+  socialPosts,
+  postScheduleQueue,
 } from '@/db/schema';
 import { eq, and, desc, isNull, or, sql, gte, lte, lt, count, like, asc, inArray } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
@@ -2932,4 +2935,140 @@ export async function getAffiliateReferrals(referrerId: string) {
   );
 
   return enriched;
+}
+
+// Social Media Queries
+
+export async function getSocialAccounts(organizationId: string) {
+  const database = await getDb();
+  return database
+    .select()
+    .from(socialAccounts)
+    .where(eq(socialAccounts.organizationId, organizationId))
+    .orderBy(desc(socialAccounts.createdAt));
+}
+
+export async function createSocialAccount(data: {
+  organizationId: string;
+  platform: 'tiktok' | 'instagram_reels' | 'youtube_shorts' | 'facebook' | 'twitter';
+  accountName: string;
+  accountId: string;
+  accessToken?: string;
+  refreshToken?: string;
+  tokenExpiresAt?: Date;
+  scopes?: any;
+}) {
+  const database = await getDb();
+  const id = createId();
+
+  await database.insert(socialAccounts).values({
+    id,
+    ...data,
+  });
+
+  return database
+    .select()
+    .from(socialAccounts)
+    .where(eq(socialAccounts.id, id))
+    .limit(1)
+    .then((rows: any[]) => rows[0]);
+}
+
+export async function updateSocialAccount(
+  id: string,
+  data: Partial<{
+    accountName: string;
+    accountId: string;
+    accessToken: string;
+    refreshToken: string;
+    tokenExpiresAt: Date;
+    scopes: any;
+    isActive: boolean;
+  }>
+) {
+  const database = await getDb();
+  await database
+    .update(socialAccounts)
+    .set(data)
+    .where(eq(socialAccounts.id, id));
+
+  return database
+    .select()
+    .from(socialAccounts)
+    .where(eq(socialAccounts.id, id))
+    .limit(1)
+    .then((rows: any[]) => rows[0]);
+}
+
+export async function getSocialPosts(finalVideoId: string) {
+  const database = await getDb();
+  return database
+    .select()
+    .from(socialPosts)
+    .where(eq(socialPosts.finalVideoId, finalVideoId))
+    .orderBy(desc(socialPosts.createdAt));
+}
+
+export async function createSocialPost(data: {
+  finalVideoId: string;
+  socialAccountId: string;
+  platform: 'tiktok' | 'instagram_reels' | 'youtube_shorts' | 'facebook' | 'twitter';
+  title?: string;
+  description?: string;
+  hashtags?: string[];
+  scheduledAt?: Date;
+}) {
+  const database = await getDb();
+  const id = createId();
+
+  await database.insert(socialPosts).values({
+    id,
+    ...data,
+  });
+
+  return database
+    .select()
+    .from(socialPosts)
+    .where(eq(socialPosts.id, id))
+    .limit(1)
+    .then((rows: any[]) => rows[0]);
+}
+
+export async function updateSocialPost(
+  id: string,
+  data: Partial<{
+    title: string;
+    description: string;
+    hashtags: string[];
+    scheduledAt: Date;
+    status: 'draft' | 'scheduled' | 'published' | 'failed';
+    platformPostId: string;
+    metrics: any;
+    errorDetails: any;
+    retryCount: number;
+  }>
+) {
+  const database = await getDb();
+  await database
+    .update(socialPosts)
+    .set(data)
+    .where(eq(socialPosts.id, id));
+
+  return database
+    .select()
+    .from(socialPosts)
+    .where(eq(socialPosts.id, id))
+    .limit(1)
+    .then((rows: any[]) => rows[0]);
+}
+
+export async function getProjectFinalVideo(projectId: string) {
+  const database = await getDb();
+  return database
+    .select()
+    .from(finalVideos)
+    .where(eq(finalVideos.projectId, projectId))
+    .orderBy(desc(finalVideos.createdAt))
+    .limit(1)
+    .then((rows: any[]) => rows[0] || null);
 }
